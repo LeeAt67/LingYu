@@ -10,33 +10,33 @@ import Layout from '@/components/layout/Layout'
 import AuthLayout from '@/components/layout/AuthLayout'
 
 // 认证相关页面 (懒加载)
-const SplashPage = lazy(() => import('@/pages/auth/SplashPage'))
-const OnboardingPage = lazy(() => import('@/pages/auth/OnboardingPage'))
-const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
-const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
-const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'))
+const Splash = lazy(() => import('@/pages/auth/Splash'))
+const Onboarding = lazy(() => import('@/pages/auth/Onboarding'))
+const Login = lazy(() => import('@/pages/auth/Login'))
+const Register = lazy(() => import('@/pages/auth/Register'))
+const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'))
 
 // 主要功能页面
-const HomePage = lazy(() => import('@/pages/HomePage'))
-const LibraryPage = lazy(() => import('@/pages/library/LibraryPage'))
-const SmartLearningPage = lazy(() => import('@/pages/SmartLearningPage'))
-const ProgressPage = lazy(() => import('@/pages/ProgressPage'))
+const Home = lazy(() => import('@/pages/Home'))
+const Library = lazy(() => import('@/pages/library/Library'))
+const SmartLearning = lazy(() => import('@/pages/SmartLearning'))
+const Progress = lazy(() => import('@/pages/Progress'))
 
 // 详情页面
-const ContentDetailPage = lazy(() => import('@/pages/library/ContentDetailPage'))
-const ChatDetailPage = lazy(() => import('@/pages/chat/ChatDetailPage'))
+const ContentDetail = lazy(() => import('@/pages/library/ContentDetail'))
+const ChatDetail = lazy(() => import('@/pages/chat/ChatDetail'))
 
 // 个人中心和设置
-const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage'))
-const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'))
-const NotificationsPage = lazy(() => import('@/pages/settings/NotificationsPage'))
-const AboutPage = lazy(() => import('@/pages/settings/AboutPage'))
+const Profile = lazy(() => import('@/pages/profile/Profile'))
+const Settings = lazy(() => import('@/pages/settings/Settings'))
+const Notifications = lazy(() => import('@/pages/settings/Notifications'))
+const About = lazy(() => import('@/pages/settings/About'))
 
 // 搜索页面
-const SearchPage = lazy(() => import('@/pages/SearchPage'))
+const Search = lazy(() => import('@/pages/Search'))
 
 // 404页面
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
+const NotFound = lazy(() => import('@/pages/NotFound'))
 
 const LazyLoad = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<LoadingSpinner />}>
@@ -53,7 +53,7 @@ export const routes: RouteObject[] = [
     path: '/splash',
     element: (
       <LazyLoad>
-        <SplashPage />
+        <Splash />
       </LazyLoad>
     ),
   },
@@ -61,7 +61,7 @@ export const routes: RouteObject[] = [
     path: '/onboarding',
     element: (
       <Suspense fallback={<LoadingSpinner />}>
-        <OnboardingPage />
+        <Onboarding />
       </Suspense>
     ),
   },
@@ -75,7 +75,7 @@ export const routes: RouteObject[] = [
         path: 'login',
         element: (
           <LazyLoad>
-            <LoginPage />
+            <Login />
           </LazyLoad>
         ),
       },
@@ -83,7 +83,7 @@ export const routes: RouteObject[] = [
         path: 'register',
         element: (
           <LazyLoad>
-            <RegisterPage />
+            <Register />
           </LazyLoad>
         ),
       },
@@ -91,7 +91,7 @@ export const routes: RouteObject[] = [
         path: 'forgot-password',
         element: (
           <LazyLoad>
-            <ForgotPasswordPage />
+            <ForgotPassword />
           </LazyLoad>
         ),
       },
@@ -108,7 +108,7 @@ export const routes: RouteObject[] = [
         index: true,
         element: (
           <LazyLoad>
-            <HomePage />
+            <Home />
           </LazyLoad>
         ),
       },
@@ -118,7 +118,7 @@ export const routes: RouteObject[] = [
         path: 'library',
         element: (
           <LazyLoad>
-            <LibraryPage />
+            <Library />
           </LazyLoad>
         ),
       },
@@ -126,7 +126,7 @@ export const routes: RouteObject[] = [
         path: 'library/:contentId',
         element: (
           <LazyLoad>
-            <ContentDetailPage />
+            <ContentDetail />
           </LazyLoad>
         ),
       },
@@ -136,7 +136,7 @@ export const routes: RouteObject[] = [
         path: 'smart-learning',
         element: (
           <LazyLoad>
-            <SmartLearningPage />
+            <SmartLearning />
           </LazyLoad>
         ),
       },
@@ -144,7 +144,7 @@ export const routes: RouteObject[] = [
         path: 'chat/:chatId',
         element: (
           <LazyLoad>
-            <ChatDetailPage />
+            <ChatDetail />
           </LazyLoad>
         ),
       },
@@ -154,7 +154,7 @@ export const routes: RouteObject[] = [
         path: 'progress',
         element: (
           <LazyLoad>
-            <ProgressPage />
+            <Progress />
           </LazyLoad>
         ),
       },
@@ -165,7 +165,7 @@ export const routes: RouteObject[] = [
         path: 'search',
         element: (
           <LazyLoad>
-            <SearchPage />
+            <Search />
           </LazyLoad>
         ),
       },
@@ -175,7 +175,7 @@ export const routes: RouteObject[] = [
         path: 'profile',
         element: (
           <LazyLoad>
-            <ProfilePage />
+            <Profile />
           </LazyLoad>
         ),
       },
@@ -185,7 +185,7 @@ export const routes: RouteObject[] = [
         path: 'settings',
         element: (
           <LazyLoad>
-            <SettingsPage />
+            <Settings />
           </LazyLoad>
         ),
       },
@@ -193,7 +193,7 @@ export const routes: RouteObject[] = [
         path: 'settings/notifications',
         element: (
           <LazyLoad>
-            <NotificationsPage />
+            <Notifications />
           </LazyLoad>
         ),
       },
@@ -201,7 +201,7 @@ export const routes: RouteObject[] = [
         path: 'settings/about',
         element: (
           <LazyLoad>
-            <AboutPage />
+            <About />
           </LazyLoad>
         ),
       },
@@ -213,7 +213,7 @@ export const routes: RouteObject[] = [
     path: '/404',
     element: (
       <LazyLoad>
-        <NotFoundPage />
+        <NotFound />
       </LazyLoad>
     ),
   },
