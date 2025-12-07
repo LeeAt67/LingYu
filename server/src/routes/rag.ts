@@ -1,11 +1,58 @@
 import express from 'express';
 import { ragService } from '../services/ragService';
 
-const router = express.Router();
+const router: express.Router = express.Router();
 
 /**
- * 个性化问答 API
- * POST /api/rag/qa
+ * @swagger
+ * /api/rag/qa:
+ *   post:
+ *     summary: 个性化问答
+ *     description: 基于用户学习内容的个性化问答
+ *     tags: [RAG]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - question
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: clxxx123
+ *               question:
+ *                 type: string
+ *                 example: 如何快速记忆单词？
+ *     responses:
+ *       200:
+ *         description: 成功获取答案
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     question:
+ *                       type: string
+ *                     answer:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: 参数错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/qa', async (req, res) => {
   try {
@@ -38,8 +85,59 @@ router.post('/qa', async (req, res) => {
 });
 
 /**
- * 知识关联 API
- * GET /api/rag/related/:contentId
+ * @swagger
+ * /api/rag/related/{contentId}:
+ *   get:
+ *     summary: 知识关联
+ *     description: 查找与指定内容相关的其他内容
+ *     tags: [RAG]
+ *     parameters:
+ *       - in: path
+ *         name: contentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 内容 ID
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
+ *         description: 返回数量
+ *     responses:
+ *       200:
+ *         description: 成功获取相关内容
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     contentId:
+ *                       type: string
+ *                     relatedContents:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Content'
+ *                     count:
+ *                       type: integer
+ *       400:
+ *         description: 参数错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/related/:contentId', async (req, res) => {
   try {
@@ -77,8 +175,38 @@ router.get('/related/:contentId', async (req, res) => {
 });
 
 /**
- * 学习建议 API
- * GET /api/rag/recommendations/:userId
+ * @swagger
+ * /api/rag/recommendations/{userId}:
+ *   get:
+ *     summary: 学习建议
+ *     description: 基于学习历史生成个性化学习建议
+ *     tags: [RAG]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用户 ID
+ *     responses:
+ *       200:
+ *         description: 成功获取学习建议
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                     generatedAt:
+ *                       type: string
+ *                       format: date-time
  */
 router.get('/recommendations/:userId', async (req, res) => {
   try {
@@ -104,8 +232,60 @@ router.get('/recommendations/:userId', async (req, res) => {
 });
 
 /**
- * 智能搜索 API
- * POST /api/rag/search
+ * @swagger
+ * /api/rag/search:
+ *   post:
+ *     summary: 智能搜索
+ *     description: 在用户内容中进行智能搜索
+ *     tags: [RAG]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - query
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: clxxx123
+ *               query:
+ *                 type: string
+ *                 example: 英语语法
+ *               type:
+ *                 type: string
+ *                 example: TEXT
+ *     responses:
+ *       200:
+ *         description: 搜索成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     query:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     result:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: 参数错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/search', async (req, res) => {
   try {

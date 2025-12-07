@@ -2,14 +2,59 @@ import express from 'express';
 import { prisma } from '../index';
 import { authenticate } from '../middleware/auth';
 
-const router = express.Router();
+const router: express.Router = express.Router();
 
 // 所有路由都需要认证
 router.use(authenticate);
 
 /**
- * 获取用户统计数据
- * GET /api/stats/overview
+ * @swagger
+ * /api/stats/overview:
+ *   get:
+ *     summary: 获取用户统计数据
+ *     description: 获取用户学习数据的总体概览
+ *     tags: [统计]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功获取统计数据
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     summary:
+ *                       type: object
+ *                       properties:
+ *                         contentCount:
+ *                           type: integer
+ *                         chatSessionCount:
+ *                           type: integer
+ *                         studySessionCount:
+ *                           type: integer
+ *                         totalStudyDuration:
+ *                           type: integer
+ *                     recentContents:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Content'
+ *                     recentStudySessions:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/StudySession'
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/overview', async (req, res) => {
   try {
@@ -83,8 +128,42 @@ router.get('/overview', async (req, res) => {
 });
 
 /**
- * 获取内容类型分布
- * GET /api/stats/content-types
+ * @swagger
+ * /api/stats/content-types:
+ *   get:
+ *     summary: 获取内容类型分布
+ *     description: 获取用户内容按类型的分布统计
+ *     tags: [统计]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功获取内容类型分布
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                         example: TEXT
+ *                       count:
+ *                         type: integer
+ *                         example: 10
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/content-types', async (req, res) => {
   try {
@@ -120,8 +199,58 @@ router.get('/content-types', async (req, res) => {
 });
 
 /**
- * 获取学习趋势（最近7天）
- * GET /api/stats/study-trend
+ * @swagger
+ * /api/stats/study-trend:
+ *   get:
+ *     summary: 获取学习趋势
+ *     description: 获取指定天数内的学习趋势数据
+ *     tags: [统计]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           default: 7
+ *         description: 统计天数
+ *     responses:
+ *       200:
+ *         description: 成功获取学习趋势
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     days:
+ *                       type: integer
+ *                       example: 7
+ *                     trend:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           date:
+ *                             type: string
+ *                             example: "2025-12-07"
+ *                           duration:
+ *                             type: integer
+ *                             example: 60
+ *                           count:
+ *                             type: integer
+ *                             example: 2
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/study-trend', async (req, res) => {
   try {
@@ -171,8 +300,55 @@ router.get('/study-trend', async (req, res) => {
 });
 
 /**
- * 创建学习记录
- * POST /api/stats/study-session
+ * @swagger
+ * /api/stats/study-session:
+ *   post:
+ *     summary: 创建学习记录
+ *     description: 记录一次学习会话
+ *     tags: [统计]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - duration
+ *             properties:
+ *               duration:
+ *                 type: integer
+ *                 example: 30
+ *                 description: 学习时长（分钟）
+ *     responses:
+ *       201:
+ *         description: 学习记录创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 学习记录创建成功
+ *                 data:
+ *                   $ref: '#/components/schemas/StudySession'
+ *       400:
+ *         description: 数据验证失败
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/study-session', async (req, res) => {
   try {
@@ -208,8 +384,42 @@ router.post('/study-session', async (req, res) => {
 });
 
 /**
- * 获取标签统计
- * GET /api/stats/tags
+ * @swagger
+ * /api/stats/tags:
+ *   get:
+ *     summary: 获取标签统计
+ *     description: 获取所有标签及其使用频率
+ *     tags: [统计]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功获取标签统计
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                         example: 英语
+ *                       count:
+ *                         type: integer
+ *                         example: 15
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/tags', async (req, res) => {
   try {

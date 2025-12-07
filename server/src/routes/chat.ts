@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../index';
 import { authenticate } from '../middleware/auth';
 
-const router = express.Router();
+const router: express.Router = express.Router();
 
 // 所有路由都需要认证
 router.use(authenticate);
@@ -20,8 +20,35 @@ const sendMessageSchema = z.object({
 });
 
 /**
- * 获取用户的所有聊天会话
- * GET /api/chat/sessions
+ * @swagger
+ * /api/chat/sessions:
+ *   get:
+ *     summary: 获取聊天会话列表
+ *     description: 获取当前用户的所有聊天会话
+ *     tags: [聊天]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功获取会话列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ChatSession'
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/sessions', async (req, res) => {
   try {
@@ -55,8 +82,45 @@ router.get('/sessions', async (req, res) => {
 });
 
 /**
- * 创建新的聊天会话
- * POST /api/chat/sessions
+ * @swagger
+ * /api/chat/sessions:
+ *   post:
+ *     summary: 创建新的聊天会话
+ *     description: 创建一个新的对话会话
+ *     tags: [聊天]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: 新对话
+ *     responses:
+ *       201:
+ *         description: 创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 创建成功
+ *                 data:
+ *                   $ref: '#/components/schemas/ChatSession'
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/sessions', async (req, res) => {
   try {
@@ -93,8 +157,53 @@ router.post('/sessions', async (req, res) => {
 });
 
 /**
- * 获取会话的所有消息
- * GET /api/chat/sessions/:sessionId/messages
+ * @swagger
+ * /api/chat/sessions/{sessionId}/messages:
+ *   get:
+ *     summary: 获取会话的所有消息
+ *     description: 获取指定会话的消息历史
+ *     tags: [聊天]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 会话 ID
+ *     responses:
+ *       200:
+ *         description: 成功获取消息列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     session:
+ *                       $ref: '#/components/schemas/ChatSession'
+ *                     messages:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/ChatMessage'
+ *       404:
+ *         description: 会话不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/sessions/:sessionId/messages', async (req, res) => {
   try {
@@ -139,8 +248,60 @@ router.get('/sessions/:sessionId/messages', async (req, res) => {
 });
 
 /**
- * 发送消息
- * POST /api/chat/messages
+ * @swagger
+ * /api/chat/messages:
+ *   post:
+ *     summary: 发送消息
+ *     description: 在指定会话中发送消息
+ *     tags: [聊天]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - sessionId
+ *               - content
+ *             properties:
+ *               sessionId:
+ *                 type: string
+ *                 example: clxxx123
+ *               content:
+ *                 type: string
+ *                 example: 你好
+ *     responses:
+ *       200:
+ *         description: 消息发送成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     userMessage:
+ *                       $ref: '#/components/schemas/ChatMessage'
+ *                     assistantMessage:
+ *                       $ref: '#/components/schemas/ChatMessage'
+ *       404:
+ *         description: 会话不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/messages', async (req, res) => {
   try {
@@ -213,8 +374,47 @@ router.post('/messages', async (req, res) => {
 });
 
 /**
- * 删除会话
- * DELETE /api/chat/sessions/:sessionId
+ * @swagger
+ * /api/chat/sessions/{sessionId}:
+ *   delete:
+ *     summary: 删除会话
+ *     description: 删除指定的聊天会话及其所有消息
+ *     tags: [聊天]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 会话 ID
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 删除成功
+ *       404:
+ *         description: 会话不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete('/sessions/:sessionId', async (req, res) => {
   try {
@@ -255,8 +455,61 @@ router.delete('/sessions/:sessionId', async (req, res) => {
 });
 
 /**
- * 更新会话标题
- * PUT /api/chat/sessions/:sessionId
+ * @swagger
+ * /api/chat/sessions/{sessionId}:
+ *   put:
+ *     summary: 更新会话标题
+ *     description: 修改聊天会话的标题
+ *     tags: [聊天]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 会话 ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: 英语学习讨论
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 更新成功
+ *                 data:
+ *                   $ref: '#/components/schemas/ChatSession'
+ *       404:
+ *         description: 会话不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: 未授权
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put('/sessions/:sessionId', async (req, res) => {
   try {

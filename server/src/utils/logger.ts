@@ -18,7 +18,21 @@ if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(
       winston.format.colorize(),
-      winston.format.simple()
+      winston.format.printf(({ level, message, timestamp, ...metadata }) => {
+        let msg = `${level}: ${message}`
+        
+        // 如果message是对象,格式化输出
+        if (typeof message === 'object') {
+          msg = `${level}: ${JSON.stringify(message, null, 2)}`
+        }
+        
+        // 如果有额外的metadata,也输出
+        if (Object.keys(metadata).length > 0) {
+          msg += ` ${JSON.stringify(metadata)}`
+        }
+        
+        return msg
+      })
     )
   }))
 }
