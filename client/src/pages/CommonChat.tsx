@@ -3,9 +3,7 @@
  */
 import { useNavigate } from 'react-router-dom'
 import { BookOpen, MessageCircle, Lightbulb, Sparkles } from 'lucide-react'
-import CameraIcon from '@/components/icons/CameraIcon'
-import MicrophoneIcon from '@/components/icons/MicrophoneIcon'
-import PlusIcon from '@/components/icons/PlusIcon'
+import ChatInput from '@/components/ChatInput'
 
 interface QuestionCard {
   id: string
@@ -19,7 +17,7 @@ interface QuestionCard {
 const CommonChatPage = () => {
   const navigate = useNavigate()
 
-  // 推荐问题卡片数据 - 语言学习场景
+  // TODO：个性化推荐问题卡片 - 语言学习场景
   const questionCards: QuestionCard[] = [
     {
       id: '1',
@@ -63,6 +61,34 @@ const CommonChatPage = () => {
         question: question,
       }
     })
+  }
+
+  // 处理发送消息
+  const handleSendMessage = (message: string) => {
+    const chatId = Date.now().toString()
+    navigate(`/chat/${chatId}`, {
+      state: {
+        question: message,
+      }
+    })
+  }
+
+  // 处理相机点击
+  const handleCameraClick = () => {
+    console.log('打开相机/选择图片')
+    // TODO: 实现图片上传功能
+  }
+
+  // 处理麦克风点击
+  const handleMicClick = () => {
+    console.log('开始语音输入')
+    // TODO: 实现语音输入功能
+  }
+
+  // 处理加号点击
+  const handlePlusClick = () => {
+    console.log('打开附件选择')
+    // TODO: 实现附件上传功能
   }
 
   return (
@@ -129,32 +155,14 @@ const CommonChatPage = () => {
       </div>
 
       {/* footer - 输入框 */}
-      <div className="fixed bottom-16 left-0 right-0 bg-white px-4 py-2">
-        <div className="flex items-center gap-2 max-w-3xl mx-auto h-11">
-          {/* 左侧相机按钮 */}
-          <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0">
-            <CameraIcon size={24} className="text-gray-500" />
-          </button>
-          
-          {/* 中间输入框容器 */}
-          <div className="flex-1 bg-gray-100 rounded-full px-4 h-full flex items-center">
-            <input 
-              type="text" 
-              placeholder="Text or hold to talk" 
-              className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
-            />
-          </div>
-          
-          {/* 右侧按钮组 */}
-          <button className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors flex-shrink-0">
-            <MicrophoneIcon size={20} className="text-gray-600" />
-          </button>
-          
-          <button className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors flex-shrink-0">
-            <PlusIcon size={20} className="text-gray-600" />
-          </button>
-        </div>
-      </div>
+      <ChatInput
+        placeholder="发消息或者按住说话..."
+        onSend={handleSendMessage}
+        onCameraClick={handleCameraClick}
+        onMicClick={handleMicClick}
+        onPlusClick={handlePlusClick}
+        className="fixed bottom-16 left-0 right-0"
+      />
     </div>
   )
 }
