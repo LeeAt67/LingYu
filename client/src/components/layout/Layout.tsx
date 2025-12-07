@@ -12,7 +12,7 @@ const Layout = () => {
   const navItems = [
     { path: '/', icon: Home, label: '首页' },
     { path: '/library', icon: Library, label: '知识' },
-    { path: '/smart-learning', icon: Bot, label: 'AI' },
+    { path: '/chat', icon: Bot, label: 'AI' },
     { path: '/profile', icon: User, label: '我的' },
   ]
 

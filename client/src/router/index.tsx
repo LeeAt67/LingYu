@@ -143,7 +143,7 @@ export const routes: RouteObject[] = [
       
       // AI智能学习
       {
-        path: 'smart-learning',
+        path: 'chat',
         element: (
           <LazyLoad>
             <SmartLearning />
