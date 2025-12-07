@@ -75,7 +75,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+# public  # 注释掉,Vite 项目需要 public 目录
 
 # Storybook build outputs
 .out
