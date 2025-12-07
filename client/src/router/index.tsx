@@ -66,6 +66,16 @@ export const routes: RouteObject[] = [
     ),
   },
 
+  // 聊天详情页面 (无布局，全屏显示)
+  {
+    path: '/chat/:chatId',
+    element: (
+      <LazyLoad>
+        <ChatDetail />
+      </LazyLoad>
+    ),
+  },
+
   // 认证相关页面 (使用认证布局)
   {
     path: '/auth',
@@ -130,24 +140,15 @@ export const routes: RouteObject[] = [
           </LazyLoad>
         ),
       },
-
-      // AI智能学习
-      {
-        path: 'smart-learning',
-        element: (
-          <LazyLoad>
-            <SmartLearning />
-          </LazyLoad>
-        ),
-      },
-      {
-        path: 'chat/:chatId',
-        element: (
-          <LazyLoad>
-            <ChatDetail />
-          </LazyLoad>
-        ),
-      },
+        // AI智能学习
+  {
+    path: 'smart-learning',
+    element: (
+      <LazyLoad>
+        <SmartLearning />
+      </LazyLoad>
+    ),
+  },
 
       // 学习进度
       {

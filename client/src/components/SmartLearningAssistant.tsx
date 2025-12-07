@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -24,6 +25,7 @@ interface SmartLearningAssistantProps {
 }
 
 const SmartLearningAssistant: React.FC<SmartLearningAssistantProps> = ({ userId }) => {
+  const navigate = useNavigate();
   const [question, setQuestion] = useState('');
   const [selectedContentId, setSelectedContentId] = useState<string | null>(null);
 
@@ -58,7 +60,16 @@ const SmartLearningAssistant: React.FC<SmartLearningAssistantProps> = ({ userId 
 
   const handleAskQuestion = () => {
     if (question.trim()) {
-      qaQuery.mutate(question);
+      // 生成基于时间戳的 chatId
+      const chatId = Date.now().toString();
+      
+      // 跳转到聊天详情页面
+      navigate(`/chat/${chatId}`, {
+        state: {
+          question: question,
+          userId: userId
+        }
+      });
     }
   };
 
@@ -144,7 +155,15 @@ const SmartLearningAssistant: React.FC<SmartLearningAssistantProps> = ({ userId 
                       key={index}
                       variant="outline"
                       className="cursor-pointer hover:bg-gray-100"
-                      onClick={() => setQuestion(example)}
+                      onClick={() => {
+                        const chatId = Date.now().toString();
+                        navigate(`/chat/${chatId}`, {
+                          state: {
+                            question: example,
+                            userId: userId
+                          }
+                        });
+                      }}
                     >
                       {example}
                     </Badge>
