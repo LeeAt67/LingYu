@@ -19,7 +19,7 @@ const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'))
 // 主要功能页面
 const Home = lazy(() => import('@/pages/Home'))
 const Library = lazy(() => import('@/pages/library/Library'))
-const SmartLearning = lazy(() => import('@/pages/SmartLearning'))
+const SmartLearning = lazy(() => import('@/pages/CommonChat'))
 const Progress = lazy(() => import('@/pages/Progress'))
 
 // 详情页面
@@ -140,15 +140,16 @@ export const routes: RouteObject[] = [
           </LazyLoad>
         ),
       },
-        // AI智能学习
-  {
-    path: 'smart-learning',
-    element: (
-      <LazyLoad>
-        <SmartLearning />
-      </LazyLoad>
-    ),
-  },
+      
+      // AI智能学习
+      {
+        path: 'smart-learning',
+        element: (
+          <LazyLoad>
+            <SmartLearning />
+          </LazyLoad>
+        ),
+      },
 
       // 学习进度
       {
