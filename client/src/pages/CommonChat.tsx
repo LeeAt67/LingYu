@@ -1,56 +1,58 @@
 /**
- * 通用AI聊天界面
+ * 通用AI聊天界面 - 语言学习助手
  */
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Paperclip, Send, Plus } from 'lucide-react'
+import { BookOpen, MessageCircle, Lightbulb, Sparkles } from 'lucide-react'
+import CameraIcon from '@/components/icons/CameraIcon'
+import MicrophoneIcon from '@/components/icons/MicrophoneIcon'
+import PlusIcon from '@/components/icons/PlusIcon'
 
 interface QuestionCard {
   id: string
   question: string
   gradient: string
   textColor: string
+  icon?: 'book' | 'message' | 'lightbulb' | 'sparkles'
+  category?: string
 }
 
 const CommonChatPage = () => {
   const navigate = useNavigate()
-  const [selectedModel, setSelectedModel] = useState<'yuanbao' | 'hunyuan'>('yuanbao')
-  const [inputText, setInputText] = useState('')
 
-  // 推荐问题卡片数据
+  // 推荐问题卡片数据 - 语言学习场景
   const questionCards: QuestionCard[] = [
     {
       id: '1',
-      question: '冬天手脚冰凉怎么改善?',
-      gradient: 'from-[#DCFCE7] to-[#B9F8CF]',
-      textColor: 'text-[#0D542B]'
+      question: '如何快速记住这个单词的多个含义?',
+      gradient: 'from-[#DBEAFE] to-[#BFDBFE]',
+      textColor: 'text-[#1E3A8A]',
+      icon: 'book',
+      category: '词汇学习'
     },
     {
       id: '2',
-      question: '"冬吃萝卜夏吃人参", 到底是哪种萝卜?',
-      gradient: 'from-[#F3F4F6] to-[#E5E7EB]',
-      textColor: 'text-gray-900'
+      question: '这个单词在句子中应该怎么用?',
+      gradient: 'from-[#FCE7F3] to-[#FBCFE8]',
+      textColor: 'text-[#831843]',
+      icon: 'message',
+      category: '语法应用'
     },
     {
       id: '3',
-      question: '吃什么可以缓解脱发问题?',
-      gradient: 'from-[#F3F4F6] to-[#E5E7EB]',
-      textColor: 'text-gray-900'
+      question: '有什么好的记忆技巧吗?',
+      gradient: 'from-[#FEF3C7] to-[#FDE68A]',
+      textColor: 'text-[#78350F]',
+      icon: 'lightbulb',
+      category: '学习方法'
     },
     {
       id: '4',
-      question: '用冷水洗脸真的能帮助毛孔收缩吗?',
-      gradient: 'from-[#F3F4F6] to-[#E5E7EB]',
-      textColor: 'text-gray-900'
+      question: '帮我解释这个词组的文化背景',
+      gradient: 'from-[#E0E7FF] to-[#C7D2FE]',
+      textColor: 'text-[#3730A3]',
+      icon: 'sparkles',
+      category: '文化拓展'
     }
-  ]
-
-  // 快捷功能按钮
-  const quickActions = [
-    { id: '1', label: '深度思考' },
-    { id: '2', label: '帮我写作' },
-    { id: '3', label: 'AI 创作' },
-    { id: '4', label: '打电话' }
   ]
 
   // 处理问题卡片点击
@@ -59,133 +61,97 @@ const CommonChatPage = () => {
     navigate(`/chat/${chatId}`, {
       state: {
         question: question,
-        model: selectedModel
       }
     })
   }
 
-  // 处理发送消息
-  const handleSendMessage = () => {
-    if (inputText.trim()) {
-      const chatId = Date.now().toString()
-      navigate(`/chat/${chatId}`, {
-        state: {
-          question: inputText,
-          model: selectedModel
-        }
-      })
-    }
-  }
-
   return (
     <div className="flex flex-col h-screen bg-white">
-      {/* 顶部AI模型切换器 */}
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          {/* Yuanbao 模型 */}
-          <button
-            onClick={() => setSelectedModel('yuanbao')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
-              selectedModel === 'yuanbao'
-                ? 'bg-gray-100'
-                : 'hover:bg-gray-50'
-            }`}
-          >
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600" />
-            <span className="text-sm font-medium text-gray-900">Yuanbao</span>
-          </button>
-
-          {/* Hunyuan 模型 */}
-          <button
-            onClick={() => setSelectedModel('hunyuan')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
-              selectedModel === 'hunyuan'
-                ? 'bg-gray-100'
-                : 'hover:bg-gray-50'
-            }`}
-          >
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-400 to-purple-600" />
-            <span className="text-sm font-medium text-gray-600">Hunyuan</span>
-          </button>
+        <div className="flex items-center gap-2">
+          {/* App Icon */}
+          <img 
+            src="/icon-192.svg" 
+            alt="好词" 
+            className="w-8 h-8"
+          />
+          {/* App Name */}
+          <h1 className="text-lg font-semibold text-gray-900">好词</h1>
         </div>
-
-        {/* 更多选项按钮 */}
-        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          <ChevronDown className="w-5 h-5 text-gray-600" />
-        </button>
       </div>
 
-      {/* 主内容区域 */}
-      <div className="flex-1 overflow-y-auto px-4 py-8">
+      {/* main */}
+      <div className="flex-1 overflow-y-auto px-4 py-8 pb-32">
         {/* 欢迎语 */}
-        <h1 className="text-2xl font-normal text-gray-900 mb-8">
-          Hi, where shall we start today?
-        </h1>
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+            你好,今天想学点什么?
+          </h1>
+          <p className="text-sm text-gray-500">
+            选择一个话题开始你的学习之旅
+          </p>
+        </div>
 
         {/* 推荐问题卡片网格 */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          {questionCards.map((card) => (
-            <button
-              key={card.id}
-              onClick={() => handleQuestionClick(card.question)}
-              className={`relative p-4 rounded-3xl bg-gradient-to-br ${card.gradient} text-left transition-transform hover:scale-[1.02] active:scale-[0.98]`}
-            >
-              <div className="flex flex-col justify-between h-40">
-                <p className={`text-sm leading-relaxed ${card.textColor}`}>
-                  {card.question}
-                </p>
-                <span className="text-xs text-gray-500">大家都在问</span>
-              </div>
-            </button>
-          ))}
+          {questionCards.map((card) => {
+            const IconComponent = 
+              card.icon === 'book' ? BookOpen :
+              card.icon === 'message' ? MessageCircle :
+              card.icon === 'lightbulb' ? Lightbulb :
+              card.icon === 'sparkles' ? Sparkles :
+              BookOpen
+
+            return (
+              <button
+                key={card.id}
+                onClick={() => handleQuestionClick(card.question)}
+                className={`relative p-4 rounded-2xl bg-gradient-to-br ${card.gradient} text-left transition-all hover:scale-[1.02] hover:shadow-md active:scale-[0.98]`}
+              >
+                <div className="flex flex-col justify-between h-40">
+                  <div className="space-y-3">
+                    <div className={`w-8 h-8 rounded-lg bg-white/50 flex items-center justify-center`}>
+                      <IconComponent className={`w-4 h-4 ${card.textColor}`} />
+                    </div>
+                    <p className={`text-sm font-medium leading-relaxed ${card.textColor}`}>
+                      {card.question}
+                    </p>
+                  </div>
+                  <span className={`text-xs ${card.textColor} opacity-60`}>
+                    {card.category}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* 底部区域 */}
-      <div className="border-t border-gray-200">
-        {/* 快捷功能按钮 */}
-        <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto">
-          {quickActions.map((action) => (
-            <button
-              key={action.id}
-              className="flex-shrink-0 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors"
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-
-        {/* 输入框区域 */}
-        <div className="flex items-center gap-2 px-4 py-3">
-          {/* 附件按钮 */}
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <Paperclip className="w-5 h-5 text-gray-600" />
+      {/* footer - 输入框 */}
+      <div className="fixed bottom-16 left-0 right-0 bg-white px-4 py-2">
+        <div className="flex items-center gap-2 max-w-3xl mx-auto h-11">
+          {/* 左侧相机按钮 */}
+          <button className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0">
+            <CameraIcon size={24} className="text-gray-500" />
           </button>
-
-          {/* 输入框 */}
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="输入你的问题..."
-              className="w-full px-4 py-2.5 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          
+          {/* 中间输入框容器 */}
+          <div className="flex-1 bg-gray-100 rounded-full px-4 h-full flex items-center">
+            <input 
+              type="text" 
+              placeholder="Text or hold to talk" 
+              className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
             />
           </div>
-
-          {/* 发送按钮 */}
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputText.trim()}
-            className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-full transition-colors"
-          >
-            <Send className="w-5 h-5 text-white" />
+          
+          {/* 右侧按钮组 */}
+          <button className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors flex-shrink-0">
+            <MicrophoneIcon size={20} className="text-gray-600" />
           </button>
-
-          {/* 添加按钮 */}
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <Plus className="w-5 h-5 text-gray-600" />
+          
+          <button className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors flex-shrink-0">
+            <PlusIcon size={20} className="text-gray-600" />
           </button>
         </div>
       </div>
