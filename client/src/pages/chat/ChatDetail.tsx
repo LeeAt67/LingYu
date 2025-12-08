@@ -3,9 +3,11 @@
  */
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, ArrowLeft } from 'lucide-react'
+import { ChevronDown, ArrowLeft, Sparkles } from 'lucide-react'
 import ChatInput from '@/components/ChatInput'
 import UserIcon from '@/components/icons/UserIcon'
+import { chatWithOllamaStream, checkOllamaHealth } from '@/api/ollama'
+import { toast } from '@/hooks/use-toast'
 
 interface LocationState {
   question?: string
@@ -26,6 +28,8 @@ const ChatDetailPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
   const [messages, setMessages] = useState<Message[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [ollamaAvailable, setOllamaAvailable] = useState(false)
 
   // 快捷功能按钮
   const quickActions = [
@@ -35,6 +39,22 @@ const ChatDetailPage = () => {
     { id: '4', label: '打电话' }
   ]
 
+  // 检查 Ollama 服务状态
+  useEffect(() => {
+    const checkOllama = async () => {
+      const isAvailable = await checkOllamaHealth()
+      setOllamaAvailable(isAvailable)
+      if (!isAvailable) {
+        toast({
+          title: '提示',
+          description: 'Ollama 服务未启动，将使用模拟回复',
+          variant: 'default'
+        })
+      }
+    }
+    checkOllama()
+  }, [])
+
 
   // 滚动到底部
   const scrollToBottom = () => {
@@ -42,8 +62,8 @@ const ChatDetailPage = () => {
   }
 
   // 处理发送消息
-  const handleSendMessage = (content: string) => {
-    if (content.trim()) {
+  const handleSendMessage = async (content: string) => {
+    if (content.trim() && !isLoading) {
       const userMessage: Message = {
         id: Date.now().toString(),
         role: 'user',
@@ -52,17 +72,79 @@ const ChatDetailPage = () => {
       }
       
       setMessages(prev => [...prev, userMessage])
+      setIsLoading(true)
       
-      // 模拟AI回复
-      setTimeout(() => {
-        const aiMessage: Message = {
+      try {
+        if (ollamaAvailable) {
+          // 使用 Ollama AI 流式回复
+          const aiMessageId = (Date.now() + 1).toString()
+          const aiMessage: Message = {
+            id: aiMessageId,
+            role: 'assistant',
+            content: '',
+            timestamp: Date.now()
+          }
+          
+          // 先添加空的 AI 消息
+          setMessages(prev => [...prev, aiMessage])
+          setIsLoading(false) // 开始接收流式数据,取消加载状态
+          
+          // 流式接收 AI 回复
+          await chatWithOllamaStream(
+            { message: content },
+            (chunk: string) => {
+              // 每次收到新的文本块,更新消息内容
+              setMessages(prev => 
+                prev.map(msg => 
+                  msg.id === aiMessageId 
+                    ? { ...msg, content: msg.content + chunk }
+                    : msg
+                )
+              )
+            },
+            (error: Error) => {
+              console.error('流式回复错误:', error)
+              toast({
+                title: '错误',
+                description: error.message,
+                variant: 'destructive'
+              })
+            }
+          )
+          
+          return // 流式处理完成,直接返回
+        } else {
+          // 模拟回复（Ollama 不可用时）
+          setTimeout(() => {
+            const aiMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: '抱歉，AI 服务暂时不可用。请确保 Ollama 服务已启动。',
+              timestamp: Date.now()
+            }
+            setMessages(prev => [...prev, aiMessage])
+            setIsLoading(false)
+          }, 1000)
+          return
+        }
+      } catch (error) {
+        console.error('AI 回复失败:', error)
+        toast({
+          title: '错误',
+          description: error instanceof Error ? error.message : 'AI 回复失败',
+          variant: 'destructive'
+        })
+        
+        const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: '这是AI的回复内容,正在思考中...',
+          content: '抱歉，我遇到了一些问题，请稍后再试。',
           timestamp: Date.now()
         }
-        setMessages(prev => [...prev, aiMessage])
-      }, 1000)
+        setMessages(prev => [...prev, errorMessage])
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -142,8 +224,8 @@ const ChatDetailPage = () => {
                     <UserIcon className="text-white" size={24} />
                   </div>
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                    <UserIcon className="text-gray-600" size={24} />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <Sparkles className="text-white" size={20} />
                   </div>
                 )}
               </div>
@@ -162,6 +244,28 @@ const ChatDetailPage = () => {
               </div>
             </div>
           ))}
+          
+          {/* 加载状态 */}
+          {isLoading && (
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                  <Sparkles className="text-white animate-pulse" size={20} />
+                </div>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                  </div>
+                  <span className="text-sm text-gray-500">AI 正在思考...</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
       </div>

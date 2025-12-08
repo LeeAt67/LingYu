@@ -11,6 +11,7 @@ import chatRoutes from './routes/chat'
 import statsRoutes from './routes/stats'
 import ragRoutes from './routes/rag'
 import recommendationsRoutes from './routes/recommendations'
+import ollamaRoutes from './routes/ollama'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger } from './middleware/requestLogger'
 import { swaggerSpec } from './config/swagger'
@@ -59,7 +60,8 @@ app.get('/', (req, res) => {
         chat: '/api/chat',
         stats: '/api/stats',
         rag: '/api/rag',
-        recommendations: '/api/recommendations'
+        recommendations: '/api/recommendations',
+        ollama: '/api/ollama'
       }
     },
     documentation: `${req.protocol}://${req.get('host')}/api-docs`
@@ -78,6 +80,7 @@ app.use('/api/chat', chatRoutes)
 app.use('/api/stats', statsRoutes)
 app.use('/api/rag', ragRoutes)
 app.use('/api/recommendations', recommendationsRoutes)
+app.use('/api/ollama', ollamaRoutes)
 
 // Error handling
 app.use(errorHandler)
