@@ -29,7 +29,7 @@ const ChatDetailPage = () => {
   
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [ollamaAvailable, setOllamaAvailable] = useState(false)
+  const [ollamaAvailable, setOllamaAvailable] = useState<boolean | null>(null)
 
   // 快捷功能按钮
   const quickActions = [
@@ -168,17 +168,11 @@ const ChatDetailPage = () => {
   }
 
   useEffect(() => {
-    // 如果有初始问题，自动发送
-    if (state?.question && messages.length === 0) {
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: state.question,
-        timestamp: Date.now()
-      }
-      setMessages([userMessage])
+    // 如果有初始问题，等待 Ollama 检查完成后自动发送
+    if (state?.question && messages.length === 0 && ollamaAvailable !== null) {
+      handleSendMessage(state.question)
     }
-  }, [state?.question, chatId])
+  }, [state?.question, chatId, ollamaAvailable])
 
   useEffect(() => {
     scrollToBottom()
