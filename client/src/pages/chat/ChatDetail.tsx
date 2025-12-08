@@ -1,13 +1,21 @@
 /**
  * 聊天详情页 - 全屏AI聊天界面（无底部导航栏）
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown,  ArrowLeft } from 'lucide-react'
+import { ChevronDown, ArrowLeft } from 'lucide-react'
 import ChatInput from '@/components/ChatInput'
+import UserIcon from '@/components/icons/UserIcon'
 
 interface LocationState {
   question?: string
+}
+
+interface Message {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: number
 }
 
 const ChatDetailPage = () => {
@@ -15,8 +23,9 @@ const ChatDetailPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const state = location.state as LocationState
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  const [inputText, setInputText] = useState('')
+  const [messages, setMessages] = useState<Message[]>([])
 
   // 快捷功能按钮
   const quickActions = [
@@ -27,12 +36,33 @@ const ChatDetailPage = () => {
   ]
 
 
+  // 滚动到底部
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   // 处理发送消息
-  const handleSendMessage = () => {
-    if (inputText.trim()) {
-      // 这里可以添加发送消息到AI的逻辑
-      console.log('发送消息:', inputText)
-      setInputText('')
+  const handleSendMessage = (content: string) => {
+    if (content.trim()) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: content,
+        timestamp: Date.now()
+      }
+      
+      setMessages(prev => [...prev, userMessage])
+      
+      // 模拟AI回复
+      setTimeout(() => {
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: '这是AI的回复内容,正在思考中...',
+          timestamp: Date.now()
+        }
+        setMessages(prev => [...prev, aiMessage])
+      }, 1000)
     }
   }
 
@@ -56,11 +86,21 @@ const ChatDetailPage = () => {
   }
 
   useEffect(() => {
-    // 如果有初始问题，可以在这里自动发送
-    if (state?.question) {
-      console.log('初始问题:', state.question, '聊天ID:', chatId)
+    // 如果有初始问题，自动发送
+    if (state?.question && messages.length === 0) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: state.question,
+        timestamp: Date.now()
+      }
+      setMessages([userMessage])
     }
   }, [state?.question, chatId])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -87,19 +127,43 @@ const ChatDetailPage = () => {
 
       {/* 主内容区域 */}
       <div className="flex-1 overflow-y-auto px-4 py-8">
-        {/* 欢迎语 */}
-        <h1 className="text-2xl font-normal text-gray-900 mb-8">
-          Hi, where shall we start today?
-        </h1>
+        <div className="space-y-6">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex items-start gap-3 ${
+                message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+              }`}
+            >
+              {/* 头像 */}
+              <div className="flex-shrink-0">
+                {message.role === 'user' ? (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                    <UserIcon className="text-white" size={24} />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <UserIcon className="text-gray-600" size={24} />
+                  </div>
+                )}
+              </div>
 
-        {/* 如果有初始问题，显示问题 */}
-        {state?.question && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">你的问题：</p>
-            <p className="text-base text-gray-900">{state.question}</p>
-          </div>
-        )}
-
+              {/* 消息气泡 */}
+              <div
+                className={`max-w-[70%] rounded-xl px-4 py-3 ${
+                  message.role === 'user'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white text-gray-900 border border-gray-200'
+                }`}
+              >
+                <p className="text-base leading-relaxed whitespace-pre-wrap break-words">
+                  {message.content}
+                </p>
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* 底部区域 */}
