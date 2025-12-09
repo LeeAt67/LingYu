@@ -3,6 +3,8 @@ import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
 import { PrismaClient } from '@prisma/client'
+import { createServer } from 'http'
+import { Server as SocketIOServer } from 'socket.io'
 import swaggerUi from 'swagger-ui-express'
 import logger from './utils/logger'
 import authRoutes from './routes/auth'
@@ -18,12 +20,25 @@ import battleRoutes from './routes/battle'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger } from './middleware/requestLogger'
 import { swaggerSpec } from './config/swagger'
+import { initBattleSocket } from './services/battleService'
 
 dotenv.config()
 
 const app = express()
+const httpServer = createServer(app)
 const prisma = new PrismaClient()
 const PORT = process.env.PORT || 5000
+
+// 初始化Socket.IO
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true,
+  },
+})
+
+// 初始化对战Socket服务
+initBattleSocket(io)
 
 // Middleware
 app.use(helmet())
@@ -112,8 +127,9 @@ process.on('SIGTERM', async () => {
   process.exit(0)
 })
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`)
+  logger.info(`Socket.IO server initialized`)
 })
 
-export { prisma }
+export { prisma, io }
