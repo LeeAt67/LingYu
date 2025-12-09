@@ -1,13 +1,132 @@
 /**
  * 首页 - 学习中心
+ * 显示随机单词、Learn和Battle卡片
  */
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/stores/useAuthStore'
+import BattleModal from '@/components/BattleModal'
+
+// 示例单词库 - 后续可以从API获取
+const wordBank = [
+  { word: 'Edge', meaning: '边缘；优势' },
+  { word: 'Brave', meaning: '勇敢的' },
+  { word: 'Wisdom', meaning: '智慧' },
+  { word: 'Journey', meaning: '旅程' },
+  { word: 'Harmony', meaning: '和谐' },
+  { word: 'Inspire', meaning: '激励' },
+  { word: 'Achieve', meaning: '实现' },
+  { word: 'Explore', meaning: '探索' },
+  { word: 'Create', meaning: '创造' },
+  { word: 'Discover', meaning: '发现' },
+]
+
 const Home = () => {
+  const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const [randomWord, setRandomWord] = useState(wordBank[0])
+  const [isBattleModalOpen, setIsBattleModalOpen] = useState(false)
+  
+  // 组件加载时随机选择一个单词
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * wordBank.length)
+    setRandomWord(wordBank[randomIndex])
+  }, [])
+
+  // 点击头像进入个人中心
+  const handleAvatarClick = () => {
+    console.log('头像被点击了，准备跳转到个人中心')
+    navigate('/profile')
+  }
+
+  // 点击Practice卡片
+  const handlePracticeClick = () => {
+    navigate('/practice')
+  }
+
+  // 点击对战卡片 - 打开弹窗
+  const handleBattleClick = () => {
+    setIsBattleModalOpen(true)
+  }
+
+  // 选择词汇量后进入对战页面
+  const handleSelectWordCount = (count: number) => {
+    navigate(`/battle?count=${count}`)
+  }
+
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">学习中心</h1>
-      <p className="text-text-secondary">首页 - 待实现</p>
+    <div 
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, #1A9B9F 0%, #0D7377 100%)'
+      }}
+    >
+      {/* 背景装饰图案 - 模拟图片中的效果 */}
+      <div className="absolute inset-0 opacity-30 z-0">
+        <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-br from-gray-400/20 to-transparent" 
+             style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
+        <div className="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-green-900/30 to-transparent" />
+      </div>
+
+      {/* 头部 - 头像 */}
+      <div className="relative z-20 p-6">
+        <button 
+          onClick={handleAvatarClick}
+          className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/30 hover:border-white/60 transition-all hover:scale-105 cursor-pointer"
+        >
+          {user?.name ? (
+            <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xl font-semibold">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xl">
+              ?
+            </div>
+          )}
+        </button>
+      </div>
+
+      {/* 中间 - 随机单词 */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 -mt-20">
+        <div className="text-center">
+          <h1 className="text-6xl font-serif font-light text-white mb-3 tracking-wide">
+            {randomWord.word}
+          </h1>
+          <p className="text-white/80 text-lg">
+            {randomWord.meaning}
+          </p>
+        </div>
+      </div>
+
+      {/* 底部 - Practice 和 Battle 卡片 */}
+      <div className="relative z-10 px-6 pb-24 grid grid-cols-2 gap-4">
+        {/* Practice 卡片 */}
+        <button
+          onClick={handlePracticeClick}
+          className="bg-green-900/60 backdrop-blur-sm rounded-2xl p-6 text-left hover:bg-green-900/70 transition-all active:scale-95 border border-white/10"
+        >
+          <h3 className="text-white text-2xl font-semibold mb-2">Practice</h3>
+          <p className="text-yellow-400 text-3xl font-bold">4564</p>
+        </button>
+
+        {/* Battle 卡片 */}
+        <button
+          onClick={handleBattleClick}
+          className="bg-green-900/60 backdrop-blur-sm rounded-2xl p-6 text-left hover:bg-green-900/70 transition-all active:scale-95 border border-white/10"
+        >
+          <h3 className="text-white text-2xl font-semibold mb-2">Battle</h3>
+          <p className="text-yellow-400 text-3xl font-bold">147</p>
+        </button>
+      </div>
+
+      {/* Battle词汇量选择弹窗 */}
+      <BattleModal
+        isOpen={isBattleModalOpen}
+        onClose={() => setIsBattleModalOpen(false)}
+        onSelectWordCount={handleSelectWordCount}
+      />
     </div>
   )
 }
 
-export default Home;
+export default Home

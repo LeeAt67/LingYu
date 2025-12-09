@@ -3,6 +3,7 @@
  */
 import { lazy, Suspense } from 'react'
 import { RouteObject, Navigate } from 'react-router-dom'
+
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 
 // 布局组件
@@ -18,22 +19,18 @@ const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'))
 
 // 主要功能页面
 const Home = lazy(() => import('@/pages/Home'))
-const Library = lazy(() => import('@/pages/library/Library'))
-const SmartLearning = lazy(() => import('@/pages/CommonChat'))
+const Content = lazy(() => import('@/pages/content/Content'))
 const Progress = lazy(() => import('@/pages/Progress'))
+const Battle = lazy(() => import('@/pages/Battle'))
+const Practice = lazy(() => import('@/pages/Practice'))
 
 // 详情页面
-const ContentDetail = lazy(() => import('@/pages/library/ContentDetail'))
 const ChatDetail = lazy(() => import('@/pages/chat/ChatDetail'))
 
 // 个人中心和设置
 const Profile = lazy(() => import('@/pages/profile/Profile'))
-const Settings = lazy(() => import('@/pages/settings/Settings'))
-const Notifications = lazy(() => import('@/pages/settings/Notifications'))
-const About = lazy(() => import('@/pages/settings/About'))
-
-// 搜索页面
-const Search = lazy(() => import('@/pages/Search'))
+const Settings = lazy(() => import('@/pages/profile/Settings'))
+const Notifications = lazy(() => import('@/pages/profile/Notifications'))
 
 // 404页面
 const NotFound = lazy(() => import('@/pages/NotFound'))
@@ -66,9 +63,9 @@ export const routes: RouteObject[] = [
     ),
   },
 
-  // 聊天详情页面 (无布局，全屏显示)
+  // 聊天页面 (无布局，全屏显示)
   {
-    path: '/chat/:chatId',
+    path: '/chat',
     element: (
       <LazyLoad>
         <ChatDetail />
@@ -113,7 +110,7 @@ export const routes: RouteObject[] = [
     path: '/',
     element: <Layout />,
     children: [
-      // 首页 - 学习中心
+      // 首页 - 唯一显示底部导航栏的页面
       {
         index: true,
         element: (
@@ -122,92 +119,76 @@ export const routes: RouteObject[] = [
           </LazyLoad>
         ),
       },
-
-      // 知识库
-      {
-        path: 'library',
-        element: (
-          <LazyLoad>
-            <Library />
-          </LazyLoad>
-        ),
-      },
-      {
-        path: 'library/:contentId',
-        element: (
-          <LazyLoad>
-            <ContentDetail />
-          </LazyLoad>
-        ),
-      },
-      
-      // AI智能学习
-      {
-        path: 'chat',
-        element: (
-          <LazyLoad>
-            <SmartLearning />
-          </LazyLoad>
-        ),
-      },
-
-      // 学习进度
-      {
-        path: 'progress',
-        element: (
-          <LazyLoad>
-            <Progress />
-          </LazyLoad>
-        ),
-      },
-
-
-      // 搜索
-      {
-        path: 'search',
-        element: (
-          <LazyLoad>
-            <Search />
-          </LazyLoad>
-        ),
-      },
-
-      // 个人中心
-      {
-        path: 'profile',
-        element: (
-          <LazyLoad>
-            <Profile />
-          </LazyLoad>
-        ),
-      },
-
-      // 设置相关
-      {
-        path: 'settings',
-        element: (
-          <LazyLoad>
-            <Settings />
-          </LazyLoad>
-        ),
-      },
-      {
-        path: 'settings/notifications',
-        element: (
-          <LazyLoad>
-            <Notifications />
-          </LazyLoad>
-        ),
-      },
-      {
-        path: 'settings/about',
-        element: (
-          <LazyLoad>
-            <About />
-          </LazyLoad>
-        ),
-      },
     ],
+  },
+
+  // Content页面 (无底部导航)
+  {
+    path: '/content',
+    element: (
+      <LazyLoad>
+        <Content />
+      </LazyLoad>
+    ),
+  },
+
+
+  // Battle对战 (无底部导航)
+  {
+    path: '/battle',
+    element: (
+      <LazyLoad>
+        <Battle />
+      </LazyLoad>
+    ),
+  },
+
+  // Practice练习 (无底部导航)
+  {
+    path: '/practice',
+    element: (
+      <LazyLoad>
+        <Practice />
+      </LazyLoad>
+    ),
+  },
+
+  // 个人中心 (无底部导航)
+  {
+    path: '/profile',
+    element: (
+      <LazyLoad>
+        <Profile />
+      </LazyLoad>
+    ),
+  },
+
+  // 设置相关 (无底部导航)
+  {
+    path: '/settings',
+    element: (
+      <LazyLoad>
+        <Settings />
+      </LazyLoad>
+    ),
+  },
+  {
+    path: '/settings/notifications',
+    element: (
+      <LazyLoad>
+        <Notifications />
+      </LazyLoad>
+    ),
+  },
+
+  // 学习进度
+  {
+    path: 'progress',
+    element: (
+      <LazyLoad>
+        <Progress />
+      </LazyLoad>
+    ),
   },
 
   // 404 页面

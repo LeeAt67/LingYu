@@ -1,9 +1,11 @@
 /**
  * 通用AI聊天界面 - 语言学习助手
  */
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookOpen, MessageCircle, Lightbulb, Sparkles } from 'lucide-react'
+import { BookOpen, MessageCircle, Lightbulb, Sparkles, ArrowLeft } from 'lucide-react'
 import ChatInput from '@/components/ChatInput'
+import { toast } from '@/hooks/use-toast'
 
 interface QuestionCard {
   id: string
@@ -16,6 +18,9 @@ interface QuestionCard {
 
 const CommonChatPage = () => {
   const navigate = useNavigate()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isRecording, setIsRecording] = useState(false)
+  const recognitionRef = useRef<any>(null)
 
   // TODO：个性化推荐问题卡片 - 语言学习场景
   const questionCards: QuestionCard[] = [
@@ -73,16 +78,153 @@ const CommonChatPage = () => {
     })
   }
 
-  // 处理相机点击
+  // 处理图片上传
   const handleCameraClick = () => {
-    console.log('打开相机/选择图片')
-    // TODO: 实现图片上传功能
+    fileInputRef.current?.click()
   }
 
-  // 处理麦克风点击
+  // 处理文件选择
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // 检查文件类型
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: '文件类型错误',
+        description: '请选择图片文件',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    // 检查文件大小（限制5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: '文件过大',
+        description: '图片大小不能超过5MB',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      // 读取图片并转换为base64
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const imageData = e.target?.result as string
+        
+        toast({
+          title: '图片已选择',
+          description: '正在处理图片...',
+        })
+
+        // TODO: 这里可以调用OCR API进行文字识别
+        // 目前先将图片信息作为消息发送
+        const chatId = Date.now().toString()
+        navigate(`/chat/${chatId}`, {
+          state: {
+            question: `[图片] ${file.name}`,
+            imageData: imageData
+          }
+        })
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('图片处理失败:', error)
+      toast({
+        title: '处理失败',
+        description: '图片处理时出现错误',
+        variant: 'destructive'
+      })
+    }
+
+    // 清空input，允许重复选择同一文件
+    event.target.value = ''
+  }
+
+  // 处理语音输入
   const handleMicClick = () => {
-    console.log('开始语音输入')
-    // TODO: 实现语音输入功能
+    // 检查浏览器是否支持语音识别
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    
+    if (!SpeechRecognition) {
+      toast({
+        title: '不支持语音识别',
+        description: '您的浏览器不支持语音识别功能，请使用Chrome或Edge浏览器',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    if (isRecording) {
+      // 停止录音
+      recognitionRef.current?.stop()
+      setIsRecording(false)
+      return
+    }
+
+    try {
+      // 创建语音识别实例
+      const recognition = new SpeechRecognition()
+      recognition.lang = 'zh-CN' // 设置为中文
+      recognition.continuous = false // 单次识别
+      recognition.interimResults = false // 不返回中间结果
+
+      recognition.onstart = () => {
+        setIsRecording(true)
+        toast({
+          title: '开始录音',
+          description: '请说话...',
+        })
+      }
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript
+        if (transcript) {
+          // 将识别的文字作为消息发送
+          handleSendMessage(transcript)
+          toast({
+            title: '识别成功',
+            description: `识别内容：${transcript}`,
+          })
+        }
+      }
+
+      recognition.onerror = (event: any) => {
+        console.error('语音识别错误:', event.error)
+        setIsRecording(false)
+        
+        let errorMessage = '语音识别失败'
+        if (event.error === 'no-speech') {
+          errorMessage = '未检测到语音，请重试'
+        } else if (event.error === 'network') {
+          errorMessage = '网络错误，请检查网络连接'
+        } else if (event.error === 'not-allowed') {
+          errorMessage = '请允许使用麦克风权限'
+        }
+
+        toast({
+          title: '识别失败',
+          description: errorMessage,
+          variant: 'destructive'
+        })
+      }
+
+      recognition.onend = () => {
+        setIsRecording(false)
+      }
+
+      recognitionRef.current = recognition
+      recognition.start()
+    } catch (error) {
+      console.error('启动语音识别失败:', error)
+      toast({
+        title: '启动失败',
+        description: '无法启动语音识别',
+        variant: 'destructive'
+      })
+    }
   }
 
   // 处理加号点击
@@ -95,7 +237,14 @@ const CommonChatPage = () => {
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* 返回按钮 */}
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-700" />
+          </button>
           {/* App Icon */}
           <img 
             src="/icon-192.svg" 
@@ -156,12 +305,22 @@ const CommonChatPage = () => {
 
       {/* footer - 输入框 */}
       <ChatInput
-        placeholder="发消息或者按住说话..."
+        placeholder={isRecording ? '正在录音...' : '发消息或者按住说话...'}
         onSend={handleSendMessage}
         onCameraClick={handleCameraClick}
         onMicClick={handleMicClick}
         onPlusClick={handlePlusClick}
         className="fixed bottom-16 left-0 right-0"
+      />
+      
+      {/* 隐藏的文件输入框 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileChange}
+        className="hidden"
       />
     </div>
   )
