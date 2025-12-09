@@ -1,25 +1,29 @@
 /**
  * 仪表盘 - 学习进度页面
  */
+import { useState, useEffect } from 'react'
 import { ChevronDown, RefreshCw, MoreVertical, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { getUserWordStats } from '@/api/words'
+import { getPracticeStats } from '@/api/practice'
 
 
 const ProgressPage = () => {
-  const navigate = useNavigate();
-  // 学习数据
-  const learningData = {
+  const navigate = useNavigate()
+  
+  // 学习数据状态
+  const [learningData, setLearningData] = useState({
     todayStudy: 0,
     todayReview: 0,
-    totalStudy: 220,
-    totalTime: 6128,
+    totalStudy: 0,
+    totalTime: 0,
     todayTime: 0,
-    totalWords: 4755,
-    studiedWords: 191,
+    totalWords: 0,
+    studiedWords: 0,
     currentBook: '四级',
     currentUnit: '生词本 9',
     consecutiveDays: 1
-  }
+  })
 
   // 日历数据
   const weekDays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -33,15 +37,42 @@ const ProgressPage = () => {
     { day: 14, status: 'normal' }
   ]
 
+  // 获取学习数据
+  const fetchData = async () => {
+    // 获取单词统计
+    const wordStats = await getUserWordStats()
+    
+    // 获取练习统计
+    const practiceStats = await getPracticeStats()
+    
+    setLearningData(prev => ({
+      ...prev,
+      totalWords: wordStats.totalWords,
+      studiedWords: wordStats.studiedWords,
+      totalStudy: practiceStats.totalPractice,
+      todayStudy: practiceStats.todayPractice,
+      totalTime: Math.floor(wordStats.practiceCount * 2), // 假设每次练习平均2分钟
+    }))
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  // 刷新数据
+  const handleRefresh = () => {
+    fetchData()
+  }
+
   return (
     <div className="min-h-screen bg-[#1a1d2e] text-white pb-20">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4">
-        <button onClick = { () => navigate(-1)}className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
           <ChevronDown className="w-6 h-6" />
         </button>
         <h1 className="text-lg font-medium">仪表盘</h1>
-        <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+        <button onClick={handleRefresh} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
           <RefreshCw className="w-6 h-6" />
         </button>
       </div>

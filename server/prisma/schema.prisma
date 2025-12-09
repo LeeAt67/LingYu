@@ -22,6 +22,7 @@ model User {
   contents Content[]
   chatSessions ChatSession[]
   studySessions StudySession[]
+  userWords UserWord[]
 
   @@map("users")
 }
@@ -81,8 +82,122 @@ model StudySession {
   @@map("study_sessions")
 }
 
+// 单词表
+model Word {
+  id          String   @id @default(cuid())
+  word        String   @unique
+  phonetic    String?
+  meaning     String
+  type        String?  // 词性: n., v., adj., adv. 等
+  level       String?  // 词汇等级: 四级, 六级, 考研等
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  options     WordOption[]
+  userWords   UserWord[]
+  practiceRecords PracticeRecord[]
+  battleWords BattleWord[]
+
+  @@map("words")
+}
+
+// 单词选项(用于选择题)
+model WordOption {
+  id        String   @id @default(cuid())
+  wordId    String
+  type      String?  // 词性
+  meaning   String   // 选项的意思
+  isCorrect Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  word Word @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@map("word_options")
+}
+
+// 用户单词关系(记录用户学习的单词)
+model UserWord {
+  id            String   @id @default(cuid())
+  userId        String
+  wordId        String
+  seenCount     Int      @default(0)  // 见过次数
+  correctCount  Int      @default(0)  // 答对次数
+  wrongCount    Int      @default(0)  // 答错次数
+  lastSeenAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  word Word @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordId])
+  @@map("user_words")
+}
+
+// 练习记录
+model PracticeRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  wordId      String
+  isCorrect   Boolean
+  timeSpent   Int      // 答题耗时(秒)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  word Word @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@map("practice_records")
+}
+
+// 对战记录
+model BattleRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  opponentId  String?  // 对手ID(可为空,表示AI对手)
+  wordCount   Int      // 对战词汇量
+  userScore   Int      @default(0)
+  opponentScore Int    @default(0)
+  isWin       Boolean?
+  duration    Int?     // 对战时长(秒)
+  status      BattleStatus @default(MATCHING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  battleWords BattleWord[]
+
+  @@map("battle_records")
+}
+
+// 对战单词记录
+model BattleWord {
+  id          String   @id @default(cuid())
+  battleId    String
+  wordId      String
+  userId      String
+  isCorrect   Boolean
+  timeSpent   Int      // 答题耗时(秒)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  battle BattleRecord @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  word   Word         @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@map("battle_words")
+}
+
 enum ContentType {
   TEXT
   AUDIO
   VIDEO
+}
+
+enum BattleStatus {
+  MATCHING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }

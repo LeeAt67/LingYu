@@ -12,6 +12,9 @@ import statsRoutes from './routes/stats'
 import ragRoutes from './routes/rag'
 import recommendationsRoutes from './routes/recommendations'
 import ollamaRoutes from './routes/ollama'
+import wordsRoutes from './routes/words'
+import practiceRoutes from './routes/practice'
+import battleRoutes from './routes/battle'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger } from './middleware/requestLogger'
 import { swaggerSpec } from './config/swagger'
@@ -61,7 +64,10 @@ app.get('/', (req, res) => {
         stats: '/api/stats',
         rag: '/api/rag',
         recommendations: '/api/recommendations',
-        ollama: '/api/ollama'
+        ollama: '/api/ollama',
+        words: '/api/words',
+        practice: '/api/practice',
+        battle: '/api/battle'
       }
     },
     documentation: `${req.protocol}://${req.get('host')}/api-docs`
@@ -81,6 +87,9 @@ app.use('/api/stats', statsRoutes)
 app.use('/api/rag', ragRoutes)
 app.use('/api/recommendations', recommendationsRoutes)
 app.use('/api/ollama', ollamaRoutes)
+app.use('/api/words', wordsRoutes)
+app.use('/api/practice', practiceRoutes)
+app.use('/api/battle', battleRoutes)
 
 // Error handling
 app.use(errorHandler)

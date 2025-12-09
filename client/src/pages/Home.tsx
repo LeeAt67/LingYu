@@ -6,31 +6,37 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/useAuthStore'
 import BattleModal from '@/components/BattleModal'
-
-// 示例单词库 - 后续可以从API获取
-const wordBank = [
-  { word: 'Edge', meaning: '边缘；优势' },
-  { word: 'Brave', meaning: '勇敢的' },
-  { word: 'Wisdom', meaning: '智慧' },
-  { word: 'Journey', meaning: '旅程' },
-  { word: 'Harmony', meaning: '和谐' },
-  { word: 'Inspire', meaning: '激励' },
-  { word: 'Achieve', meaning: '实现' },
-  { word: 'Explore', meaning: '探索' },
-  { word: 'Create', meaning: '创造' },
-  { word: 'Discover', meaning: '发现' },
-]
+import { getRandomWord } from '@/api/words'
+import { getPracticeStats } from '@/api/practice'
+import { getBattleStats } from '@/api/battle'
 
 const Home = () => {
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const [randomWord, setRandomWord] = useState(wordBank[0])
+  const [randomWord, setRandomWord] = useState({ word: 'Edge', meaning: '边缘；优势' })
   const [isBattleModalOpen, setIsBattleModalOpen] = useState(false)
+  const [practiceTotal, setPracticeTotal] = useState(0)
+  const [battleWins, setBattleWins] = useState(0)
   
-  // 组件加载时随机选择一个单词
+  // 组件加载时获取随机单词和统计数据
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * wordBank.length)
-    setRandomWord(wordBank[randomIndex])
+    const fetchData = async () => {
+      // 获取随机单词
+      const word = await getRandomWord()
+      if (word) {
+        setRandomWord(word)
+      }
+      
+      // 获取练习统计
+      const practiceStats = await getPracticeStats()
+      setPracticeTotal(practiceStats.totalPractice)
+      
+      // 获取对战统计
+      const battleStats = await getBattleStats()
+      setBattleWins(battleStats.wins)
+    }
+    
+    fetchData()
   }, [])
 
   // 点击头像进入个人中心
@@ -106,7 +112,7 @@ const Home = () => {
           className="bg-green-900/60 backdrop-blur-sm rounded-2xl p-6 text-left hover:bg-green-900/70 transition-all active:scale-95 border border-white/10"
         >
           <h3 className="text-white text-2xl font-semibold mb-2">Practice</h3>
-          <p className="text-yellow-400 text-3xl font-bold">4564</p>
+          <p className="text-yellow-400 text-3xl font-bold">{practiceTotal}</p>
         </button>
 
         {/* Battle 卡片 */}
@@ -115,7 +121,7 @@ const Home = () => {
           className="bg-green-900/60 backdrop-blur-sm rounded-2xl p-6 text-left hover:bg-green-900/70 transition-all active:scale-95 border border-white/10"
         >
           <h3 className="text-white text-2xl font-semibold mb-2">Battle</h3>
-          <p className="text-yellow-400 text-3xl font-bold">147</p>
+          <p className="text-yellow-400 text-3xl font-bold">{battleWins}</p>
         </button>
       </div>
 

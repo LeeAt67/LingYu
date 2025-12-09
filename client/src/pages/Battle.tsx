@@ -5,15 +5,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/stores/useAuthStore'
-
-// 示例单词库
-const battleWords = [
-  { word: 'Abandon', options: ['放弃', '获得', '保持', '继续'] },
-  { word: 'Ability', options: ['能力', '残疾', '无能', '困难'] },
-  { word: 'Absent', options: ['缺席的', '出席的', '现在的', '未来的'] },
-  { word: 'Absolute', options: ['绝对的', '相对的', '可能的', '也许的'] },
-  { word: 'Accept', options: ['接受', '拒绝', '忽略', '避免'] },
-]
+import {
+  startBattle,
+  getBattleWords,
+  submitBattleAnswer,
+  completeBattle,
+  type BattleRecord,
+  type BattleWord,
+} from '@/api/battle'
 
 const Battle = () => {
   const navigate = useNavigate()
@@ -21,19 +20,37 @@ const Battle = () => {
   const { user } = useAuthStore()
   
   const wordCount = parseInt(searchParams.get('count') || '30')
-  const [currentWord] = useState(battleWords[0])
+  
+  // 对战状态
+  const [battle, setBattle] = useState<BattleRecord | null>(null)
+  const [words, setWords] = useState<BattleWord[]>([])
+  const [currentWordIndex, setCurrentWordIndex] = useState(0)
   const [isMatching, setIsMatching] = useState(true)
   const [timeLeft, setTimeLeft] = useState(5)
   const [isAnswered, setIsAnswered] = useState(false)
   const [showBubble, setShowBubble] = useState(true)
-  const [seenCount] = useState(Math.floor(Math.random() * 10) + 1) // 模拟见过的次数
+  const [userScore, setUserScore] = useState(0)
+  const [opponentScore, setOpponentScore] = useState(0)
+  const [startTime, setStartTime] = useState<number>(0)
 
-  // 模拟匹配过程
+  // 初始化对战
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsMatching(false)
-    }, 2000)
-    return () => clearTimeout(timer)
+    const initBattle = async () => {
+      const battleRecord = await startBattle(wordCount)
+      if (battleRecord) {
+        setBattle(battleRecord)
+        // 等待匹配完成后获取单词
+        setTimeout(async () => {
+          const wordsData = await getBattleWords(battleRecord.id)
+          if (wordsData) {
+            setWords(wordsData.words)
+            setIsMatching(false)
+            setStartTime(Date.now())
+          }
+        }, 2000)
+      }
+    }
+    initBattle()
   }, [])
 
   // 气泡显示2秒后隐藏
@@ -63,28 +80,58 @@ const Battle = () => {
     }
   }, [timeLeft, isMatching, isAnswered])
 
-  const handleGoBack = () => {
+  const handleGoBack = async () => {
+    // 如果对战已开始，先完成对战
+    if (battle && !isMatching) {
+      await completeBattle(battle.id)
+    }
     navigate(-1)
   }
 
-  const handleOptionClick = (option: string) => {
-    if (isAnswered) return // 已答题则不处理
+  const handleOptionClick = async (selectedMeaning: string) => {
+    if (isAnswered || !battle || !words[currentWordIndex]) return
     
     setIsAnswered(true)
-    console.log('选择了:', option)
+    const currentWord = words[currentWordIndex]
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000)
     
-    // TODO: 判断答案是否正确
-    // TODO: 1秒后跳转到下一题
-    setTimeout(() => {
-      console.log('准备下一题')
-      // 重置状态
-      setTimeLeft(5)
-      setIsAnswered(false)
-    }, 1000)
+    // 判断答案是否正确（第一个选项为正确答案）
+    const isCorrect = currentWord.options[0]?.meaning === selectedMeaning
+    
+    // 提交答案
+    await submitBattleAnswer(battle.id, {
+      wordId: currentWord.id,
+      isCorrect,
+      timeSpent,
+    })
+    
+    // 更新分数
+    if (isCorrect) {
+      setUserScore(prev => prev + 1)
+    }
+    
+    // 模拟对手得分（70%正确率）
+    if (Math.random() > 0.3) {
+      setOpponentScore(prev => prev + 1)
+    }
+    
+    // 1.5秒后跳转到下一题或完成对战
+    setTimeout(async () => {
+      if (currentWordIndex < words.length - 1) {
+        setCurrentWordIndex(prev => prev + 1)
+        setTimeLeft(5)
+        setIsAnswered(false)
+        setStartTime(Date.now())
+      } else {
+        // 对战完成
+        await completeBattle(battle.id)
+        navigate('/')
+      }
+    }, 1500)
   }
 
   // 匹配中界面
-  if (isMatching) {
+  if (isMatching || words.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-500 to-teal-700 flex flex-col items-center justify-center p-6">
         <div className="text-white text-center">
@@ -97,6 +144,8 @@ const Battle = () => {
       </div>
     )
   }
+
+  const currentWord = words[currentWordIndex]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-500 to-teal-700 flex flex-col">
@@ -127,7 +176,7 @@ const Battle = () => {
               {user?.name ? user.name.charAt(0).toUpperCase() : 'Y'}
             </div>
             <p className="text-white font-semibold">{user?.name || '你'}</p>
-            <p className="text-white/80 text-sm">0/{wordCount}</p>
+            <p className="text-white/80 text-sm">{userScore}/{wordCount}</p>
           </div>
 
           {/* VS */}
@@ -139,17 +188,17 @@ const Battle = () => {
               O
             </div>
             <p className="text-white font-semibold">对手</p>
-            <p className="text-white/80 text-sm">0/{wordCount}</p>
+            <p className="text-white/80 text-sm">{opponentScore}/{wordCount}</p>
           </div>
         </div>
 
         {/* 单词卡片 */}
         <div className="w-full max-w-md mb-8 relative">
           {/* 气泡提示 */}
-          {showBubble && (
+          {showBubble && currentWord.seenCount > 0 && (
             <div className="absolute -top-2 -right-2 z-10 animate-bounce">
               <div className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium whitespace-nowrap">
-                这个词你见过 {seenCount} 次哦~
+                这个词你见过 {currentWord.seenCount} 次哦~
                 {/* 小三角 */}
                 <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-3 h-3 bg-rose-500" />
               </div>
@@ -169,7 +218,7 @@ const Battle = () => {
           {currentWord.options.map((option, index) => (
             <button
               key={index}
-              onClick={() => handleOptionClick(option)}
+              onClick={() => handleOptionClick(option.meaning)}
               disabled={isAnswered}
               className={`w-full bg-white/90 backdrop-blur-sm rounded-2xl py-4 px-6 text-left transition-all shadow-lg ${
                 isAnswered 
@@ -177,7 +226,7 @@ const Battle = () => {
                   : 'hover:bg-white hover:shadow-xl active:scale-95'
               }`}
             >
-              <span className="text-lg font-semibold text-gray-900">{option}</span>
+              <span className="text-lg font-semibold text-gray-900">{option.meaning}</span>
             </button>
           ))}
         </div>
@@ -188,11 +237,11 @@ const Battle = () => {
         <div className="bg-white/20 rounded-full h-3 overflow-hidden">
           <div 
             className="bg-white h-full transition-all duration-300"
-            style={{ width: '0%' }}
+            style={{ width: `${((currentWordIndex + 1) / words.length) * 100}%` }}
           />
         </div>
         <p className="text-white text-center text-sm mt-2">
-          第 1 / {wordCount} 题
+          第 {currentWordIndex + 1} / {words.length} 题
         </p>
       </div>
     </div>
