@@ -47,22 +47,22 @@ export const initBattleSocket = (io: SocketIOServer) => {
     // 用户加入匹配队列
     socket.on('battle:join', async (data: { userId: string; userName: string; wordCount: number }) => {
       const { userId, userName, wordCount } = data
-      
+
       // 保存用户socket映射
       userSockets.set(userId, socket.id)
-      
+
       // 检查是否有等待的玩家
       const waitingPlayers = waitingQueue.get(wordCount) || []
-      
+
       if (waitingPlayers.length > 0) {
         // 匹配到对手
         const opponentSocketId = waitingPlayers.shift()!
         waitingQueue.set(wordCount, waitingPlayers)
-        
+
         // 创建对战房间
         const battleId = `battle_${Date.now()}`
         const opponentSocket = io.sockets.sockets.get(opponentSocketId)
-        
+
         if (!opponentSocket) {
           // 对手已断开，继续等待
           waitingPlayers.push(socket.id)
@@ -70,10 +70,10 @@ export const initBattleSocket = (io: SocketIOServer) => {
           socket.emit('battle:waiting')
           return
         }
-        
+
         // 获取对手信息
         const opponentData = (opponentSocket as any).battleData
-        
+
         // 创建房间
         const room: BattleRoom = {
           id: battleId,
@@ -97,37 +97,37 @@ export const initBattleSocket = (io: SocketIOServer) => {
           currentWordIndex: 0,
           createdAt: new Date()
         }
-        
+
         battleRooms.set(battleId, room)
-        
+
         // 双方加入房间
         socket.join(battleId)
         opponentSocket.join(battleId)
-        
+
         // 通知双方匹配成功
         io.to(battleId).emit('battle:matched', {
           battleId,
           opponent: {
             player1: { userId: room.player1.userId, name: room.player1.name },
-            player2: { userId: room.player2.userId, name: room.player2.name }
+            player2: room.player2 ? { userId: room.player2.userId, name: room.player2.name } : null
           }
         })
-        
+
         // 获取单词列表
         const words = await getRandomWords(wordCount)
         room.words = words
-        
+
         // 发送单词列表给双方
         io.to(battleId).emit('battle:words', { words })
-        
+
       } else {
         // 加入等待队列
         waitingPlayers.push(socket.id)
         waitingQueue.set(wordCount, waitingPlayers)
-        
-        // 保存用户数据到socket
-        ;(socket as any).battleData = { userId, userName, wordCount }
-        
+
+          // 保存用户数据到socket
+          ; (socket as any).battleData = { userId, userName, wordCount }
+
         socket.emit('battle:waiting')
       }
     })
@@ -136,16 +136,16 @@ export const initBattleSocket = (io: SocketIOServer) => {
     socket.on('battle:ready', (data: { battleId: string }) => {
       const { battleId } = data
       const room = battleRooms.get(battleId)
-      
+
       if (!room) return
-      
+
       // 标记玩家为准备状态
       if (room.player1.socketId === socket.id) {
         room.player1.ready = true
       } else if (room.player2?.socketId === socket.id) {
         room.player2.ready = true
       }
-      
+
       // 检查双方是否都准备好
       if (room.player1.ready && room.player2?.ready) {
         room.status = 'IN_PROGRESS'
@@ -154,7 +154,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
     })
 
     // 玩家提交答案
-    socket.on('battle:answer', async (data: { 
+    socket.on('battle:answer', async (data: {
       battleId: string
       wordId: string
       isCorrect: boolean
@@ -162,9 +162,9 @@ export const initBattleSocket = (io: SocketIOServer) => {
     }) => {
       const { battleId, wordId, isCorrect, timeSpent } = data
       const room = battleRooms.get(battleId)
-      
+
       if (!room) return
-      
+
       // 更新分数
       let userId = ''
       if (room.player1.socketId === socket.id) {
@@ -174,7 +174,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
         if (isCorrect) room.player2.score++
         userId = room.player2.userId
       }
-      
+
       // 保存答题记录到数据库
       await prisma.battleWord.create({
         data: {
@@ -185,7 +185,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
           timeSpent
         }
       })
-      
+
       // 广播分数更新
       io.to(battleId).emit('battle:score-update', {
         player1Score: room.player1.score,
@@ -197,15 +197,15 @@ export const initBattleSocket = (io: SocketIOServer) => {
     socket.on('battle:complete', async (data: { battleId: string }) => {
       const { battleId } = data
       const room = battleRooms.get(battleId)
-      
+
       if (!room) return
-      
+
       room.status = 'COMPLETED'
-      
+
       // 计算胜负
       const player1Win = room.player1.score > (room.player2?.score || 0)
       const player2Win = (room.player2?.score || 0) > room.player1.score
-      
+
       // 更新数据库
       await prisma.battleRecord.update({
         where: { id: battleId },
@@ -216,7 +216,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
           isWin: player1Win
         }
       })
-      
+
       // 如果有player2，也创建他的记录
       if (room.player2) {
         await prisma.battleRecord.create({
@@ -231,7 +231,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
           }
         })
       }
-      
+
       // 通知双方对战结果
       io.to(battleId).emit('battle:result', {
         player1: {
@@ -247,7 +247,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
           isWin: player2Win
         } : null
       })
-      
+
       // 清理房间
       battleRooms.delete(battleId)
     })
@@ -255,7 +255,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
     // 玩家断开连接
     socket.on('disconnect', () => {
       console.log('用户断开:', socket.id)
-      
+
       // 从等待队列中移除
       waitingQueue.forEach((queue, wordCount) => {
         const index = queue.indexOf(socket.id)
@@ -264,7 +264,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
           waitingQueue.set(wordCount, queue)
         }
       })
-      
+
       // 从房间中移除
       battleRooms.forEach((room, battleId) => {
         if (room.player1.socketId === socket.id || room.player2?.socketId === socket.id) {
@@ -273,7 +273,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
           battleRooms.delete(battleId)
         }
       })
-      
+
       // 清理用户映射
       userSockets.forEach((socketId, userId) => {
         if (socketId === socket.id) {
@@ -290,7 +290,7 @@ export const initBattleSocket = (io: SocketIOServer) => {
 async function getRandomWords(count: number) {
   const totalWords = await prisma.word.count()
   const skip = Math.max(0, Math.floor(Math.random() * (totalWords - count)))
-  
+
   const words = await prisma.word.findMany({
     skip,
     take: count,
@@ -302,7 +302,7 @@ async function getRandomWords(count: number) {
       }
     }
   })
-  
+
   return words.map(word => ({
     id: word.id,
     word: word.word,
