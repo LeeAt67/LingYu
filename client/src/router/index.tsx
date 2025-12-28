@@ -1,44 +1,44 @@
 /**
  * 路由配置文件
  */
-import { lazy, Suspense } from 'react'
-import { RouteObject, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from "react";
+import { RouteObject, Navigate } from "react-router-dom";
 
-import LoadingSpinner from '@/components/common/LoadingSpinner'
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 // 布局组件
-import Layout from '@/components/layout/Layout'
-import AuthLayout from '@/components/layout/AuthLayout'
+import Layout from "@/components/layout/Layout";
+import AuthLayout from "@/components/layout/AuthLayout";
 
 // 认证相关页面 (懒加载)
-const Splash = lazy(() => import('@/pages/auth/Splash'))
-const Onboarding = lazy(() => import('@/pages/auth/Onboarding'))
-const Login = lazy(() => import('@/pages/auth/Login'))
-const Register = lazy(() => import('@/pages/auth/Register'))
-const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'))
+const Splash = lazy(() => import("@/pages/auth/Splash"));
+const Onboarding = lazy(() => import("@/pages/auth/Onboarding"));
+const Login = lazy(() => import("@/pages/auth/Login"));
+const Register = lazy(() => import("@/pages/auth/Register"));
+const ForgotPassword = lazy(() => import("@/pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/pages/auth/ResetPassword"));
 
 // 主要功能页面
-const Home = lazy(() => import('@/pages/Home'))
-const Content = lazy(() => import('@/pages/content/Content'))
-const Progress = lazy(() => import('@/pages/Progress'))
-const Practice = lazy(() => import('@/pages/Practice'))
+const Home = lazy(() => import("@/pages/Home"));
+const Content = lazy(() => import("@/pages/content/Content"));
+const Progress = lazy(() => import("@/pages/Progress"));
+const Practice = lazy(() => import("@/pages/Practice"));
 
 // 详情页面
-const ChatDetail = lazy(() => import('@/pages/chat/ChatDetail'))
+const ChatDetail = lazy(() => import("@/pages/chat/ChatDetail"));
 
 // 个人中心和设置
-const Profile = lazy(() => import('@/pages/profile/Profile'))
-const Settings = lazy(() => import('@/pages/profile/Settings'))
-const Notifications = lazy(() => import('@/pages/profile/Notifications'))
+const Profile = lazy(() => import("@/pages/profile/Profile"));
+const ProfileEdit = lazy(() => import("@/pages/profile/ProfileEdit"));
+const Settings = lazy(() => import("@/pages/profile/Settings"));
+const Notifications = lazy(() => import("@/pages/profile/Notifications"));
 
 // 404页面
-const NotFound = lazy(() => import('@/pages/NotFound'))
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 const LazyLoad = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<LoadingSpinner />}>
-    {children}
-  </Suspense>
-)
+  <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
+);
 
 /**
  * 路由配置
@@ -46,7 +46,7 @@ const LazyLoad = ({ children }: { children: React.ReactNode }) => (
 export const routes: RouteObject[] = [
   // 启动页和引导页 (无布局)
   {
-    path: '/splash',
+    path: "/splash",
     element: (
       <LazyLoad>
         <Splash />
@@ -54,7 +54,7 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/onboarding',
+    path: "/onboarding",
     element: (
       <Suspense fallback={<LoadingSpinner />}>
         <Onboarding />
@@ -64,7 +64,7 @@ export const routes: RouteObject[] = [
 
   // 聊天页面 (无布局，全屏显示)
   {
-    path: '/chat',
+    path: "/chat",
     element: (
       <LazyLoad>
         <ChatDetail />
@@ -74,11 +74,11 @@ export const routes: RouteObject[] = [
 
   // 认证相关页面 (使用认证布局)
   {
-    path: '/auth',
+    path: "/auth",
     element: <AuthLayout />,
     children: [
       {
-        path: 'login',
+        path: "login",
         element: (
           <LazyLoad>
             <Login />
@@ -86,7 +86,7 @@ export const routes: RouteObject[] = [
         ),
       },
       {
-        path: 'register',
+        path: "register",
         element: (
           <LazyLoad>
             <Register />
@@ -94,10 +94,18 @@ export const routes: RouteObject[] = [
         ),
       },
       {
-        path: 'forgot-password',
+        path: "forgot-password",
         element: (
           <LazyLoad>
             <ForgotPassword />
+          </LazyLoad>
+        ),
+      },
+      {
+        path: "reset-password",
+        element: (
+          <LazyLoad>
+            <ResetPassword />
           </LazyLoad>
         ),
       },
@@ -106,7 +114,7 @@ export const routes: RouteObject[] = [
 
   // 主应用页面 (使用主布局和底部导航)
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       // 首页 - 唯一显示底部导航栏的页面
@@ -123,7 +131,7 @@ export const routes: RouteObject[] = [
 
   // Content页面 (无底部导航)
   {
-    path: '/content',
+    path: "/content",
     element: (
       <LazyLoad>
         <Content />
@@ -133,7 +141,7 @@ export const routes: RouteObject[] = [
 
   // Practice练习 (无底部导航)
   {
-    path: '/practice',
+    path: "/practice",
     element: (
       <LazyLoad>
         <Practice />
@@ -143,17 +151,25 @@ export const routes: RouteObject[] = [
 
   // 个人中心 (无底部导航)
   {
-    path: '/profile',
+    path: "/profile",
     element: (
       <LazyLoad>
         <Profile />
       </LazyLoad>
     ),
   },
+  {
+    path: "/profile/edit",
+    element: (
+      <LazyLoad>
+        <ProfileEdit />
+      </LazyLoad>
+    ),
+  },
 
   // 设置相关 (无底部导航)
   {
-    path: '/settings',
+    path: "/settings",
     element: (
       <LazyLoad>
         <Settings />
@@ -161,7 +177,7 @@ export const routes: RouteObject[] = [
     ),
   },
   {
-    path: '/settings/notifications',
+    path: "/settings/notifications",
     element: (
       <LazyLoad>
         <Notifications />
@@ -171,7 +187,7 @@ export const routes: RouteObject[] = [
 
   // 学习进度
   {
-    path: 'progress',
+    path: "progress",
     element: (
       <LazyLoad>
         <Progress />
@@ -181,7 +197,7 @@ export const routes: RouteObject[] = [
 
   // 404 页面
   {
-    path: '/404',
+    path: "/404",
     element: (
       <LazyLoad>
         <NotFound />
@@ -191,9 +207,9 @@ export const routes: RouteObject[] = [
 
   // 重定向所有未匹配的路由到404
   {
-    path: '*',
+    path: "*",
     element: <Navigate to="/404" replace />,
   },
-]
+];
 
-export default routes
+export default routes;
