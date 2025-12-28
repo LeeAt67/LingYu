@@ -1,7 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
 import { prisma } from '../index';
-import { authenticate } from '../middleware/auth';
+import { authenticate, optionalAuth } from '../middleware/auth';
 import { passwordService } from '../services/passwordService';
 import { tokenService } from '../services/tokenService';
 import { loginRateLimiter, resetRateLimit } from '../middleware/rateLimiter';
@@ -704,13 +704,13 @@ router.put('/password', authenticate, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/logout', authenticate, async (req, res) => {
+router.post('/logout', optionalAuth, async (req, res) => {
   try {
-    // 获取当前令牌
+    // 获取当前令牌（如果存在）
     const token = req.headers.authorization?.replace('Bearer ', '');
 
-    if (token) {
-      // 使令牌失效（添加到黑名单）
+    if (token && req.user) {
+      // 如果有令牌且已认证，使令牌失效（添加到黑名单）
       tokenService.invalidateToken(token);
     }
 

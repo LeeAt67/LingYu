@@ -11,6 +11,9 @@ export const apiClient = axios.create({
   },
 })
 
+// 标记是否正在执行 logout，避免重复调用
+let isLoggingOut = false
+
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
@@ -29,9 +32,25 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout()
-      window.location.href = '/login'
+    // 如果是 401 错误且不是 logout 请求本身，且没有正在执行 logout
+    if (
+      error.response?.status === 401 &&
+      !error.config?.url?.includes('/auth/logout') &&
+      !isLoggingOut
+    ) {
+      isLoggingOut = true
+      useAuthStore.getState().logout().finally(() => {
+        isLoggingOut = false
+        // 只在非登录/注册页面时跳转到登录页
+        const currentPath = window.location.pathname
+        if (
+          !currentPath.startsWith('/auth/') &&
+          currentPath !== '/splash' &&
+          currentPath !== '/onboarding'
+        ) {
+          window.location.href = '/auth/login'
+        }
+      })
     }
     return Promise.reject(error)
   }

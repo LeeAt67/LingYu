@@ -94,12 +94,18 @@ export const useAuthStore = create<AuthState>()(
 
       // 退出登录
       logout: async () => {
+        const { token } = get();
         set({ isLoading: true, error: null });
+        
         try {
-          await authApi.logout();
+          // 只有在有 token 的情况下才调用后端 logout 接口
+          if (token) {
+            await authApi.logout();
+          }
         } catch (error) {
           console.error('退出登录失败:', error);
         } finally {
+          // 无论后端调用是否成功，都清除本地状态
           set({
             user: null,
             token: null,

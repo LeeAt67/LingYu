@@ -13,9 +13,15 @@ export class RealtimeWsClient {
     this.events = events;
   }
 
-  connect(model: string, voice: string) {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const url = `${proto}://${location.host}/realtime/ws?model=${encodeURIComponent(model)}`;
+  connect(model: string, _voice: string) {
+    // 使用环境变量配置的 WebSocket 地址
+    const wsBaseUrl = import.meta.env.VITE_WS_URL || 
+                      (import.meta.env.VITE_API_URL?.replace('http', 'ws').replace('/api', '')) ||
+                      'ws://localhost:5000';
+    const url = `${wsBaseUrl}/realtime/ws?model=${encodeURIComponent(model)}`;
+    
+    console.log('🔌 连接 WebSocket:', url);
+    
     this.ws = new WebSocket(url);
     this.ws.binaryType = 'arraybuffer';
     this.ws.onopen = () => this.events.onOpen?.();
