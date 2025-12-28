@@ -16,11 +16,11 @@ import recommendationsRoutes from './routes/recommendations'
 import ollamaRoutes from './routes/ollama'
 import wordsRoutes from './routes/words'
 import practiceRoutes from './routes/practice'
-import battleRoutes from './routes/battle'
+import voiceChatRoutes from './routes/voiceChat'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger } from './middleware/requestLogger'
 import { swaggerSpec } from './config/swagger'
-import { initBattleSocket } from './services/battleService'
+import { setupVoiceProxy } from './ws/voiceProxy'
 
 dotenv.config()
 
@@ -37,8 +37,8 @@ const io = new SocketIOServer(httpServer, {
   },
 })
 
-// 初始化对战Socket服务
-initBattleSocket(io)
+// 初始化Voice WebSocket Proxy
+setupVoiceProxy(httpServer)
 
 // Middleware
 app.use(helmet())
@@ -82,7 +82,7 @@ app.get('/', (req, res) => {
         ollama: '/api/ollama',
         words: '/api/words',
         practice: '/api/practice',
-        battle: '/api/battle'
+        voiceChat: '/api/voice-chat'
       }
     },
     documentation: `${req.protocol}://${req.get('host')}/api-docs`
@@ -104,7 +104,7 @@ app.use('/api/recommendations', recommendationsRoutes)
 app.use('/api/ollama', ollamaRoutes)
 app.use('/api/words', wordsRoutes)
 app.use('/api/practice', practiceRoutes)
-app.use('/api/battle', battleRoutes)
+app.use('/api/voice-chat', voiceChatRoutes)
 
 // Error handling
 app.use(errorHandler)

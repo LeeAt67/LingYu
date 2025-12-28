@@ -1,23 +1,19 @@
 /**
  * 首页 - 学习中心
- * 显示随机单词、Learn和Battle卡片
+ * 显示随机单词和Practice卡片
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/useAuthStore'
-import BattleModal from '@/components/BattleModal'
 import { getRandomWord } from '@/api/words'
 import { getPracticeStats } from '@/api/practice'
-import { getBattleStats } from '@/api/battle'
 
 const Home = () => {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [randomWord, setRandomWord] = useState({ word: 'Edge', meaning: '边缘；优势' })
-  const [isBattleModalOpen, setIsBattleModalOpen] = useState(false)
   const [practiceTotal, setPracticeTotal] = useState(0)
-  const [battleWins, setBattleWins] = useState(0)
-  
+
   // 组件加载时获取随机单词和统计数据
   useEffect(() => {
     const fetchData = async () => {
@@ -26,16 +22,12 @@ const Home = () => {
       if (word) {
         setRandomWord(word)
       }
-      
+
       // 获取练习统计
       const practiceStats = await getPracticeStats()
       setPracticeTotal(practiceStats.totalPractice)
-      
-      // 获取对战统计
-      const battleStats = await getBattleStats()
-      setBattleWins(battleStats.wins)
     }
-    
+
     fetchData()
   }, [])
 
@@ -50,18 +42,8 @@ const Home = () => {
     navigate('/practice')
   }
 
-  // 点击对战卡片 - 打开弹窗
-  const handleBattleClick = () => {
-    setIsBattleModalOpen(true)
-  }
-
-  // 选择词汇量后进入对战页面
-  const handleSelectWordCount = (count: number) => {
-    navigate(`/battle?count=${count}`)
-  }
-
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col relative overflow-hidden"
       style={{
         background: 'linear-gradient(180deg, #1A9B9F 0%, #0D7377 100%)'
@@ -69,14 +51,14 @@ const Home = () => {
     >
       {/* 背景装饰图案 - 模拟图片中的效果 */}
       <div className="absolute inset-0 opacity-30 z-0">
-        <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-br from-gray-400/20 to-transparent" 
-             style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
+        <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-br from-gray-400/20 to-transparent"
+          style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
         <div className="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-green-900/30 to-transparent" />
       </div>
 
       {/* 头部 - 头像 */}
       <div className="relative z-20 p-6">
-        <button 
+        <button
           onClick={handleAvatarClick}
           className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/30 hover:border-white/60 transition-all hover:scale-105 cursor-pointer"
         >
@@ -104,33 +86,17 @@ const Home = () => {
         </div>
       </div>
 
-      {/* 底部 - Practice 和 Battle 卡片 */}
-      <div className="relative z-10 px-6 pb-24 grid grid-cols-2 gap-4">
+      {/* 底部 - Practice 卡片 */}
+      <div className="relative z-10 px-6 pb-24">
         {/* Practice 卡片 */}
         <button
           onClick={handlePracticeClick}
-          className="bg-green-900/60 backdrop-blur-sm rounded-2xl p-6 text-left hover:bg-green-900/70 transition-all active:scale-95 border border-white/10"
+          className="w-full bg-green-900/60 backdrop-blur-sm rounded-2xl p-6 text-left hover:bg-green-900/70 transition-all active:scale-95 border border-white/10"
         >
           <h3 className="text-white text-2xl font-semibold mb-2">Practice</h3>
           <p className="text-yellow-400 text-3xl font-bold">{practiceTotal}</p>
         </button>
-
-        {/* Battle 卡片 */}
-        <button
-          onClick={handleBattleClick}
-          className="bg-green-900/60 backdrop-blur-sm rounded-2xl p-6 text-left hover:bg-green-900/70 transition-all active:scale-95 border border-white/10"
-        >
-          <h3 className="text-white text-2xl font-semibold mb-2">Battle</h3>
-          <p className="text-yellow-400 text-3xl font-bold">{battleWins}</p>
-        </button>
       </div>
-
-      {/* Battle词汇量选择弹窗 */}
-      <BattleModal
-        isOpen={isBattleModalOpen}
-        onClose={() => setIsBattleModalOpen(false)}
-        onSelectWordCount={handleSelectWordCount}
-      />
     </div>
   )
 }

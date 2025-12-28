@@ -21,7 +21,6 @@ const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword'))
 const Home = lazy(() => import('@/pages/Home'))
 const Content = lazy(() => import('@/pages/content/Content'))
 const Progress = lazy(() => import('@/pages/Progress'))
-const Battle = lazy(() => import('@/pages/Battle'))
 const Practice = lazy(() => import('@/pages/Practice'))
 
 // 详情页面
@@ -128,17 +127,6 @@ export const routes: RouteObject[] = [
     element: (
       <LazyLoad>
         <Content />
-      </LazyLoad>
-    ),
-  },
-
-
-  // Battle对战 (无底部导航)
-  {
-    path: '/battle',
-    element: (
-      <LazyLoad>
-        <Battle />
       </LazyLoad>
     ),
   },

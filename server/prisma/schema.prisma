@@ -15,6 +15,8 @@ model User {
   email     String   @unique
   name      String
   password  String
+  emailVerified Boolean @default(false)
+  lastLoginAt   DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -23,6 +25,9 @@ model User {
   chatSessions ChatSession[]
   studySessions StudySession[]
   userWords UserWord[]
+  voiceSessions VoiceSession[]
+  refreshTokens RefreshToken[]
+  resetTokens   PasswordResetToken[]
 
   @@map("users")
 }
@@ -53,6 +58,7 @@ model ChatSession {
   // Relations
   user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages ChatMessage[]
+  voiceSessions VoiceSession[]
 
   @@map("chat_sessions")
 }
@@ -97,7 +103,6 @@ model Word {
   options     WordOption[]
   userWords   UserWord[]
   practiceRecords PracticeRecord[]
-  battleWords BattleWord[]
 
   @@map("words")
 }
@@ -152,52 +157,45 @@ model PracticeRecord {
   @@map("practice_records")
 }
 
-// 对战记录
-model BattleRecord {
-  id          String   @id @default(cuid())
-  userId      String
-  opponentId  String?  // 对手ID(可为空,表示AI对手)
-  wordCount   Int      // 对战词汇量
-  userScore   Int      @default(0)
-  opponentScore Int    @default(0)
-  isWin       Boolean?
-  duration    Int?     // 对战时长(秒)
-  status      BattleStatus @default(MATCHING)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  battleWords BattleWord[]
-
-  @@map("battle_records")
-}
-
-// 对战单词记录
-model BattleWord {
-  id          String   @id @default(cuid())
-  battleId    String
-  wordId      String
-  userId      String
-  isCorrect   Boolean
-  timeSpent   Int      // 答题耗时(秒)
-  createdAt   DateTime @default(now())
-
-  // Relations
-  battle BattleRecord @relation(fields: [battleId], references: [id], onDelete: Cascade)
-  word   Word         @relation(fields: [wordId], references: [id], onDelete: Cascade)
-
-  @@map("battle_words")
-}
-
 enum ContentType {
   TEXT
   AUDIO
   VIDEO
 }
 
-enum BattleStatus {
-  MATCHING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
+// 语音会话
+model VoiceSession {
+  id        String   @id @default(cuid())
+  userId    String
+  chatId    String?  // 关联到现有聊天会话
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  duration  Int?     // 通话时长（秒）
+  model     String   @default("qwen3-omni-flash-realtime")
+
+  // Relations
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat     ChatSession?   @relation(fields: [chatId], references: [id], onDelete: SetNull)
+  messages VoiceMessage[]
+
+  @@index([userId])
+  @@index([chatId])
+  @@map("voice_sessions")
+}
+
+// 语音消息
+model VoiceMessage {
+  id        String       @id @default(cuid())
+  sessionId String
+  role      String       // 'user' | 'assistant'
+  content   String       @db.Text // 转录文本
+  audioUrl  String?      // 可选：音频文件URL
+  timestamp DateTime     @default(now())
+
+  // Relations
+  session VoiceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([timestamp])
+  @@map("voice_messages")
 }
