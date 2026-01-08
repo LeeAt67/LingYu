@@ -1,146 +1,155 @@
 /**
  * Practice练习页面
  */
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import {
   getPracticeWords,
   submitPracticeAnswer,
   type PracticeWord,
-} from '@/api/practice'
+} from "@/api/practice";
 
 const Practice = () => {
-  const navigate = useNavigate()
-  
-  const [words, setWords] = useState<PracticeWord[]>([])
-  const [currentWordIndex, setCurrentWordIndex] = useState(0)
-  const [isAnswered, setIsAnswered] = useState(false)
-  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null)
-  const [showBubble, setShowBubble] = useState(true)
-  const [showAnswer, setShowAnswer] = useState(false)
-  const [correctCount, setCorrectCount] = useState(0)
-  const [startTime, setStartTime] = useState<number>(0)
-  const [isLoading, setIsLoading] = useState(true)
+  const navigate = useNavigate();
+
+  const [words, setWords] = useState<PracticeWord[]>([]);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(
+    null
+  );
+  const [showBubble, setShowBubble] = useState(true);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [startTime, setStartTime] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   // 初始化练习单词
   useEffect(() => {
     const initPractice = async () => {
-      const practiceWords = await getPracticeWords({ count: 10 })
+      const practiceWords = await getPracticeWords({ count: 10 });
       if (practiceWords.length > 0) {
-        setWords(practiceWords)
-        setStartTime(Date.now())
+        setWords(practiceWords);
+        setStartTime(Date.now());
       }
-      setIsLoading(false)
-    }
-    initPractice()
-  }, [])
+      setIsLoading(false);
+    };
+    initPractice();
+  }, []);
 
   // 气泡显示2秒后隐藏
   useEffect(() => {
-    if (words.length === 0) return
-    setShowBubble(true)
+    if (words.length === 0) return;
+    setShowBubble(true);
     const timer = setTimeout(() => {
-      setShowBubble(false)
-    }, 2000)
-    return () => clearTimeout(timer)
-  }, [currentWordIndex, words.length])
+      setShowBubble(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [currentWordIndex, words.length]);
 
   const handleGoBack = () => {
-    navigate(-1)
-  }
+    navigate(-1);
+  };
 
   const handleOptionClick = async (optionIndex: number) => {
-    if (isAnswered || words.length === 0) return
-    
-    setIsAnswered(true)
-    setSelectedOptionIndex(optionIndex)
-    
-    const currentWord = words[currentWordIndex]
-    const timeSpent = Math.floor((Date.now() - startTime) / 1000)
-    
+    if (isAnswered || words.length === 0) return;
+
+    setIsAnswered(true);
+    setSelectedOptionIndex(optionIndex);
+
+    const currentWord = words[currentWordIndex];
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
     // 判断答案是否正确（第一个选项为正确答案，isCorrect为true）
-    const correctOptionIndex = currentWord.options.findIndex(opt => opt.isCorrect)
-    const isCorrect = optionIndex === correctOptionIndex
-    
+    const correctOptionIndex = currentWord.options.findIndex(
+      (opt) => opt.isCorrect
+    );
+    const isCorrect = optionIndex === correctOptionIndex;
+
     if (isCorrect) {
-      setCorrectCount(prev => prev + 1)
+      setCorrectCount((prev) => prev + 1);
     }
-    
+
     // 提交答案
     await submitPracticeAnswer({
       wordId: currentWord.id,
       isCorrect,
       timeSpent,
-    })
-    
+    });
+
     // 1.5秒后跳转到下一题
     setTimeout(() => {
       if (currentWordIndex < words.length - 1) {
-        setCurrentWordIndex(prev => prev + 1)
-        setIsAnswered(false)
-        setSelectedOptionIndex(null)
-        setShowAnswer(false)
-        setStartTime(Date.now())
+        setCurrentWordIndex((prev) => prev + 1);
+        setIsAnswered(false);
+        setSelectedOptionIndex(null);
+        setShowAnswer(false);
+        setStartTime(Date.now());
       } else {
         // 练习完成,返回首页
-        navigate('/')
+        navigate("/");
       }
-    }, 1500)
-  }
-  
+    }, 1500);
+  };
+
   const handleShowAnswer = () => {
-    setShowAnswer(true)
-  }
+    setShowAnswer(true);
+  };
 
   // 获取选项的样式
   const getOptionStyle = (optionIndex: number) => {
-    if (words.length === 0) return ''
-    
-    const currentWord = words[currentWordIndex]
-    const correctOptionIndex = currentWord.options.findIndex(opt => opt.isCorrect)
-    
+    if (words.length === 0) return "";
+
+    const currentWord = words[currentWordIndex];
+    const correctOptionIndex = currentWord.options.findIndex(
+      (opt) => opt.isCorrect
+    );
+
     if (!isAnswered && !showAnswer) {
-      return 'bg-white/20 backdrop-blur-md hover:bg-white/30 border border-white/30'
+      return "bg-gray-100 hover:bg-gray-200 border border-gray-300 text-black";
     }
-    
+
     // 显示答案或已答题后显示正确/错误
     if (optionIndex === correctOptionIndex) {
-      return 'bg-green-500/80 text-white border border-green-400'
+      return "bg-green-500 text-white border border-green-600";
     }
-    if (optionIndex === selectedOptionIndex && optionIndex !== correctOptionIndex) {
-      return 'bg-red-500/80 text-white border border-red-400'
+    if (
+      optionIndex === selectedOptionIndex &&
+      optionIndex !== correctOptionIndex
+    ) {
+      return "bg-red-500 text-white border border-red-600";
     }
-    return 'bg-white/10 opacity-60 border border-white/20'
-  }
+    return "bg-gray-50 opacity-60 border border-gray-200 text-gray-500";
+  };
 
   // 加载中界面
   if (isLoading || words.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-500 to-teal-700 flex flex-col items-center justify-center p-6">
-        <div className="text-white text-center">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
+        <div className="text-black text-center">
           <div className="mb-8">
-            <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <div className="w-20 h-20 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2">正在加载练习...</h2>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  const currentWord = words[currentWordIndex]
+  const currentWord = words[currentWordIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-500 to-teal-700 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 bg-white/10 backdrop-blur-sm">
+      <div className="flex items-center justify-between px-4 py-4 bg-gray-100 border-b border-gray-300">
         <button
           onClick={handleGoBack}
-          className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
         >
-          <ArrowLeft className="w-6 h-6 text-white" />
+          <ArrowLeft className="w-6 h-6 text-black" />
         </button>
-        <h1 className="text-xl font-bold text-white">练习</h1>
+        <h1 className="text-xl font-bold text-black">练习</h1>
         <div className="w-10" /> {/* 占位元素保持居中 */}
       </div>
 
@@ -158,13 +167,17 @@ const Practice = () => {
               </div>
             </div>
           )}
-          
-          <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-3xl p-8 shadow-2xl">
-            <h2 className="text-5xl font-light text-white mb-3 tracking-wide">
+
+          <div className="bg-gray-100 border-2 border-gray-300 rounded-3xl p-8 shadow-lg">
+            <h2 className="text-5xl font-light text-black mb-3 tracking-wide">
               {currentWord.word}
             </h2>
-            <p className="text-white/60 text-base mb-4">{currentWord.phonetic}</p>
-            <p className="text-white/50 text-sm">先回想词义再选择，想不起来↓看答案↓</p>
+            <p className="text-gray-600 text-base mb-4">
+              {currentWord.phonetic}
+            </p>
+            <p className="text-gray-500 text-sm">
+              先回想词义再选择，想不起来↓看答案↓
+            </p>
           </div>
         </div>
 
@@ -175,19 +188,21 @@ const Practice = () => {
               key={index}
               onClick={() => handleOptionClick(index)}
               disabled={isAnswered || showAnswer}
-              className={`w-full rounded-2xl py-4 px-5 text-left transition-all ${getOptionStyle(index)}`}
+              className={`w-full rounded-2xl py-4 px-5 text-left transition-all ${getOptionStyle(
+                index
+              )}`}
             >
-              <div className="text-sm text-white/80 mb-1">{option.type}</div>
-              <div className="text-base font-medium text-white">{option.meaning}</div>
+              <div className="text-sm mb-1">{option.type}</div>
+              <div className="text-base font-medium">{option.meaning}</div>
             </button>
           ))}
         </div>
-        
+
         {/* 看答案按钮 */}
         {!isAnswered && !showAnswer && (
           <button
             onClick={handleShowAnswer}
-            className="mt-6 text-white text-base font-medium underline underline-offset-4 hover:text-white/80 transition-colors"
+            className="mt-6 text-blue-600 text-base font-medium underline underline-offset-4 hover:text-blue-700 transition-colors"
           >
             看答案
           </button>
@@ -196,18 +211,20 @@ const Practice = () => {
 
       {/* 底部进度 */}
       <div className="px-6 pb-6">
-        <div className="bg-white/20 rounded-full h-3 overflow-hidden">
-          <div 
-            className="bg-white h-full transition-all duration-300"
-            style={{ width: `${((currentWordIndex + 1) / words.length) * 100}%` }}
+        <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div
+            className="bg-blue-600 h-full transition-all duration-300"
+            style={{
+              width: `${((currentWordIndex + 1) / words.length) * 100}%`,
+            }}
           />
         </div>
-        <p className="text-white text-center text-sm mt-2">
+        <p className="text-black text-center text-sm mt-2">
           第 {currentWordIndex + 1} / {words.length} 题 · 正确 {correctCount} 题
         </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Practice
+export default Practice;
