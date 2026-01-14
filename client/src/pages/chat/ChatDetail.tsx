@@ -1,11 +1,11 @@
 /**
- * 聊天详情页 - 全屏AI聊天界面（无底部导航栏）
+ * 聊天详情页 - Web 桌面端 AI 对话界面
  */
 import { useState, useEffect, useRef } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { Plus, ArrowLeft, Sparkles, Phone } from "lucide-react";
-import ChatInput from "@/components/ChatInput";
-import UserIcon from "@/components/icons/UserIcon";
+import { useParams, useLocation } from "react-router-dom";
+import { Sparkles, Send, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import VoiceCallModal from "@/components/voice/VoiceCallModal";
 import { chatWithOllamaStream, checkOllamaHealth } from "@/api/ollama";
 import { ragPersonalizedQA } from "@/api/rag";
@@ -26,51 +26,17 @@ interface Message {
 const ChatDetailPage = () => {
   const { chatId } = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
   const state = location.state as LocationState;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuthStore();
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [ollamaAvailable, setOllamaAvailable] = useState<boolean | null>(null);
-  const [useRAG, setUseRAG] = useState(true); // 默认启用RAG检索
-  const [isRecording, setIsRecording] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(true); // 显示欢迎语
-  const [isVoiceCallOpen, setIsVoiceCallOpen] = useState(false); // 语音通话模态框状态
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<any>(null);
-
-  // 快捷功能按钮 - 根据RAG模式动态调整
-  const quickActions =
-    useRAG && user?.id
-      ? [
-          {
-            id: "1",
-            label: "📚 总结我的学习内容",
-            prompt: "请总结一下我最近学习的内容",
-          },
-          {
-            id: "2",
-            label: "💡 推荐学习主题",
-            prompt: "根据我的学习历史，推荐一些新的学习主题",
-          },
-          { id: "3", label: "🔍 查找相关知识", prompt: "帮我找出相关的知识点" },
-          { id: "4", label: "📝 复习提醒", prompt: "有哪些内容需要复习？" },
-        ]
-      : [
-          { id: "1", label: "深度思考", prompt: "" },
-          { id: "2", label: "帮我写作", prompt: "" },
-          { id: "3", label: "AI 创作", prompt: "" },
-          { id: "4", label: "打电话", prompt: "" },
-        ];
-
-  // 处理快捷操作点击
-  const handleQuickAction = (action: (typeof quickActions)[0]) => {
-    if (action.prompt) {
-      handleSendMessage(action.prompt);
-    }
-  };
+  const [useRAG, setUseRAG] = useState(true);
+  const [isVoiceCallOpen, setIsVoiceCallOpen] = useState(false);
 
   // 检查 Ollama 服务状态
   useEffect(() => {
@@ -96,10 +62,6 @@ const ChatDetailPage = () => {
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || isLoading) return;
 
-    // 隐藏欢迎语
-    setShowWelcome(false);
-
-    // 添加用户消息
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -107,10 +69,10 @@ const ChatDetailPage = () => {
       timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, userMessage]);
+    setInput("");
     setIsLoading(true);
 
     try {
-      // 优先使用RAG检索（如果用户已登录且启用RAG）
       if (useRAG && user?.id) {
         try {
           const ragAnswer = await ragPersonalizedQA({
@@ -129,13 +91,10 @@ const ChatDetailPage = () => {
           return;
         } catch (ragError) {
           console.warn("RAG检索失败，降级使用Ollama:", ragError);
-          // RAG失败时降级到Ollama
         }
       }
 
-      // 使用 Ollama AI
       if (ollamaAvailable) {
-        // 使用 Ollama AI 流式回复
         const aiMessageId = (Date.now() + 1).toString();
         const aiMessage: Message = {
           id: aiMessageId,
@@ -144,15 +103,12 @@ const ChatDetailPage = () => {
           timestamp: Date.now(),
         };
 
-        // 先添加空的 AI 消息
         setMessages((prev) => [...prev, aiMessage]);
-        setIsLoading(false); // 开始接收流式数据,取消加载状态
+        setIsLoading(false);
 
-        // 流式接收 AI 回复
         await chatWithOllamaStream(
           { message },
           (chunk: string) => {
-            // 每次收到新的文本块,更新消息内容
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === aiMessageId
@@ -170,10 +126,8 @@ const ChatDetailPage = () => {
             });
           }
         );
-
-        return; // 流式处理完成,直接返回
+        return;
       } else {
-        // 模拟回复（Ollama 不可用时）
         setTimeout(() => {
           const aiMessage: Message = {
             id: (Date.now() + 1).toString(),
@@ -207,156 +161,13 @@ const ChatDetailPage = () => {
     }
   };
 
-  // 处理图片上传
-  const handleCameraClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  // 处理文件选择
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "文件类型错误",
-        description: "请选择图片文件",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "文件过大",
-        description: "图片大小不能超过5MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageData = e.target?.result as string;
-
-        // 添加图片消息到聊天
-        const imageMessage: Message = {
-          id: Date.now().toString(),
-          role: "user",
-          content: `[图片] ${file.name}`,
-          timestamp: Date.now(),
-        };
-        setMessages((prev) => [...prev, imageMessage]);
-
-        toast({
-          title: "图片已上传",
-          description: "图片上传成功，可以继续提问",
-        });
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("图片处理失败:", error);
-      toast({
-        title: "处理失败",
-        description: "图片处理时出现错误",
-        variant: "destructive",
-      });
-    }
-
-    event.target.value = "";
-  };
-
-  // 处理语音输入
-  const handleMicClick = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      toast({
-        title: "不支持语音识别",
-        description: "您的浏览器不支持语音识别功能，请使用Chrome或Edge浏览器",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (isRecording) {
-      recognitionRef.current?.stop();
-      setIsRecording(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "zh-CN";
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => {
-        setIsRecording(true);
-        toast({
-          title: "开始录音",
-          description: "请说话...",
-        });
-      };
-
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          handleSendMessage(transcript);
-          toast({
-            title: "识别成功",
-            description: `识别内容：${transcript}`,
-          });
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("语音识别错误:", event.error);
-        setIsRecording(false);
-
-        let errorMessage = "语音识别失败";
-        if (event.error === "no-speech") {
-          errorMessage = "未检测到语音，请重试";
-        } else if (event.error === "network") {
-          errorMessage = "网络错误，请检查网络连接";
-        } else if (event.error === "not-allowed") {
-          errorMessage = "请允许使用麦克风权限";
-        }
-
-        toast({
-          title: "识别失败",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (error) {
-      console.error("启动语音识别失败:", error);
-      toast({
-        title: "启动失败",
-        description: "无法启动语音识别",
-        variant: "destructive",
-      });
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(input);
     }
   };
 
-  const handlePlusClick = () => {
-    console.log("打开附件选择");
-    // TODO: 实现附件上传功能
-  };
-
-  // 打开语音通话
   const handleVoiceCallClick = () => {
     if (!user?.id) {
       toast({
@@ -369,22 +180,7 @@ const ChatDetailPage = () => {
     setIsVoiceCallOpen(true);
   };
 
-  // 处理语音转录（将转录内容添加到聊天消息）
-  const handleVoiceTranscription = (
-    role: "user" | "assistant",
-    text: string
-  ) => {
-    // 可选：将语音转录同步到文本聊天界面
-    console.log("语音转录:", role, text);
-  };
-
-  // 返回上一页
-  const handleGoBack = () => {
-    navigate(-1);
-  };
-
   useEffect(() => {
-    // 如果有初始问题，等待 Ollama 检查完成后自动发送
     if (state?.question && messages.length === 0 && ollamaAvailable !== null) {
       handleSendMessage(state.question);
     }
@@ -394,121 +190,102 @@ const ChatDetailPage = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
+
   return (
-    <div className="flex flex-col h-screen bg-white">
-      {/* 顶部 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          {/* 返回按钮 */}
-          <button
-            onClick={handleGoBack}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </button>
-
-          <h1 className="flex-1 text-lg font-semibold text-gray-900">好词</h1>
-
-          {/* RAG模式指示器 */}
-          {user?.id && (
-            <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* 顶部栏 */}
+      <div className="border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-black">AI 对话</h2>
+            {user?.id && (
               <button
                 onClick={() => setUseRAG(!useRAG)}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                   useRAG
-                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    ? "bg-black text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                {useRAG ? "RAG检索" : "AI对话"}
+                {useRAG ? "RAG 检索" : "普通对话"}
               </button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* 语音通话按钮 */}
-          <button
+            )}
+          </div>
+          <Button
             onClick={handleVoiceCallClick}
-            className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
-            title="语音通话"
+            variant="outline"
+            size="sm"
+            className="gap-2"
           >
-            <Phone className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
-          </button>
-
-          {/* 新建聊天按钮 */}
-          <button
-            onClick={() => window.location.reload()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Plus className="w-5 h-5 text-gray-600" />
-          </button>
+            <Phone className="w-4 h-4" />
+            语音通话
+          </Button>
         </div>
       </div>
 
       {/* 主内容区域 */}
-      <div className="flex-1 overflow-y-auto px-4 py-8">
-        {/* 欢迎语 - 当没有消息时显示 */}
-        {messages.length === 0 && showWelcome && (
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-6">
-              <Sparkles className="text-white" size={40} />
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-8 py-8">
+          {/* 欢迎语 */}
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center mb-6">
+                <Sparkles className="text-white" size={32} />
+              </div>
+              <h2 className="text-2xl font-semibold text-black mb-2">
+                你好！我是 AI 助手
+              </h2>
+              <p className="text-gray-600 text-center max-w-md">
+                我可以帮助你解答问题、提供建议或进行对话。
+              </p>
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              你好！我是 HaoCi (好词) 学习平台的智能助手
-            </h2>
-            <p className="text-gray-500 text-center max-w-md">
-              专门帮助你学习语言知识。
-            </p>
-          </div>
-        )}
+          )}
 
-        <div className="space-y-6">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex items-start gap-3 ${
-                message.role === "user" ? "flex-row-reverse" : "flex-row"
-              }`}
-            >
-              {/* 头像 */}
-              <div className="flex-shrink-0">
-                {message.role === "user" ? (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
-                    <UserIcon className="text-white" size={24} />
+          {/* 消息列表 */}
+          <div className="space-y-6">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex gap-4 ${
+                  message.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                {message.role === "assistant" && (
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-black flex items-center justify-center">
+                    <Sparkles className="text-white" size={16} />
                   </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                    <Sparkles className="text-white" size={20} />
+                )}
+                <div
+                  className={`max-w-[70%] rounded-lg px-4 py-3 ${
+                    message.role === "user"
+                      ? "bg-black text-white"
+                      : "bg-gray-100 text-black"
+                  }`}
+                >
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {message.content}
+                  </p>
+                </div>
+                {message.role === "user" && (
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-sm font-medium text-gray-600">
+                      {user?.name?.charAt(0).toUpperCase() || "U"}
+                    </span>
                   </div>
                 )}
               </div>
+            ))}
 
-              {/* 消息气泡 */}
-              <div
-                className={`max-w-[70%] rounded-xl px-4 py-3 ${
-                  message.role === "user"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white text-gray-900 border border-gray-200"
-                }`}
-              >
-                <p className="text-base leading-relaxed whitespace-pre-wrap break-words">
-                  {message.content}
-                </p>
-              </div>
-            </div>
-          ))}
-
-          {/* 加载状态 */}
-          {isLoading && (
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                  <Sparkles className="text-white animate-pulse" size={20} />
+            {/* 加载状态 */}
+            {isLoading && (
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-black flex items-center justify-center">
+                  <Sparkles className="text-white animate-pulse" size={16} />
                 </div>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2">
+                <div className="bg-gray-100 rounded-lg px-4 py-3">
                   <div className="flex gap-1">
                     <span
                       className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
@@ -523,51 +300,40 @@ const ChatDetailPage = () => {
                       style={{ animationDelay: "300ms" }}
                     ></span>
                   </div>
-                  <span className="text-sm text-gray-500">AI 正在思考...</span>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} />
+          </div>
         </div>
       </div>
 
-      {/* 底部区域 */}
-      <div className="border-t border-gray-200">
-        {/* 快捷功能按钮 */}
-        <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto">
-          {quickActions.map((action) => (
-            <button
-              key={action.id}
-              onClick={() => handleQuickAction(action)}
+      {/* 底部输入区域 */}
+      <div className="border-t border-gray-200 bg-white">
+        <div className="max-w-4xl mx-auto px-8 py-6">
+          <div className="flex gap-4 items-end">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="输入消息... (Enter 发送，Shift+Enter 换行)"
+              rows={1}
+              className="flex-1 resize-none min-h-[44px] max-h-[200px] border-gray-200"
               disabled={isLoading}
-              className="flex-shrink-0 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <Button
+              onClick={() => handleSendMessage(input)}
+              disabled={!input.trim() || isLoading}
+              className="bg-black hover:bg-gray-800 text-white px-6"
+              size="lg"
             >
-              {action.label}
-            </button>
-          ))}
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-
-        {/* 输入框区域 */}
-        <ChatInput
-          placeholder={isRecording ? "正在录音..." : "输入你的问题..."}
-          onSend={handleSendMessage}
-          onCameraClick={handleCameraClick}
-          onMicClick={handleMicClick}
-          onPlusClick={handlePlusClick}
-        />
       </div>
-
-      {/* 隐藏的文件输入框 */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFileChange}
-        className="hidden"
-      />
 
       {/* 语音通话模态框 */}
       {user?.id && (
@@ -576,7 +342,7 @@ const ChatDetailPage = () => {
           onOpenChange={setIsVoiceCallOpen}
           userId={user.id}
           sessionId={chatId}
-          onTranscription={handleVoiceTranscription}
+          onTranscription={(role, text) => console.log("语音转录:", role, text)}
         />
       )}
     </div>

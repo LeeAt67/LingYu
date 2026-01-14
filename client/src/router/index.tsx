@@ -19,19 +19,14 @@ const ForgotPassword = lazy(() => import("@/pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/auth/ResetPassword"));
 
 // 主要功能页面
-const Home = lazy(() => import("@/pages/Home"));
-const Content = lazy(() => import("@/pages/content/Content"));
-const Progress = lazy(() => import("@/pages/Progress"));
-const Practice = lazy(() => import("@/pages/Practice"));
+const Translator = lazy(() =>
+  import("@/pages/translator/Translator").then((module) => ({
+    default: module.Translator,
+  }))
+);
 
 // 详情页面
 const ChatDetail = lazy(() => import("@/pages/chat/ChatDetail"));
-
-// 个人中心和设置
-const Profile = lazy(() => import("@/pages/profile/Profile"));
-const ProfileEdit = lazy(() => import("@/pages/profile/ProfileEdit"));
-const Settings = lazy(() => import("@/pages/profile/Settings"));
-const Notifications = lazy(() => import("@/pages/profile/Notifications"));
 
 // 404页面
 const NotFound = lazy(() => import("@/pages/NotFound"));
@@ -65,11 +60,17 @@ export const routes: RouteObject[] = [
   // 聊天页面 (无布局，全屏显示)
   {
     path: "/chat",
-    element: (
-      <LazyLoad>
-        <ChatDetail />
-      </LazyLoad>
-    ),
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: (
+          <LazyLoad>
+            <ChatDetail />
+          </LazyLoad>
+        ),
+      },
+    ],
   },
 
   // 认证相关页面 (使用认证布局)
@@ -112,87 +113,42 @@ export const routes: RouteObject[] = [
     ],
   },
 
-  // 主应用页面 (使用主布局和底部导航)
+  // 主应用页面 (使用主布局和侧边导航)
   {
     path: "/",
     element: <Layout />,
     children: [
-      // 首页 - 唯一显示底部导航栏的页面
+      // 默认重定向到翻译器
       {
         index: true,
+        element: <Navigate to="/translator" replace />,
+      },
+      // 翻译器
+      {
+        path: "translator",
         element: (
           <LazyLoad>
-            <Home />
+            <Translator />
           </LazyLoad>
         ),
       },
     ],
   },
 
-  // Content页面 (无底部导航)
+  // 聊天页面
   {
-    path: "/content",
-    element: (
-      <LazyLoad>
-        <Content />
-      </LazyLoad>
-    ),
-  },
-
-  // Practice练习 (无底部导航)
-  {
-    path: "/practice",
-    element: (
-      <LazyLoad>
-        <Practice />
-      </LazyLoad>
-    ),
-  },
-
-  // 个人中心 (无底部导航)
-  {
-    path: "/profile",
-    element: (
-      <LazyLoad>
-        <Profile />
-      </LazyLoad>
-    ),
-  },
-  {
-    path: "/profile/edit",
-    element: (
-      <LazyLoad>
-        <ProfileEdit />
-      </LazyLoad>
-    ),
-  },
-
-  // 设置相关 (无底部导航)
-  {
-    path: "/settings",
-    element: (
-      <LazyLoad>
-        <Settings />
-      </LazyLoad>
-    ),
-  },
-  {
-    path: "/settings/notifications",
-    element: (
-      <LazyLoad>
-        <Notifications />
-      </LazyLoad>
-    ),
-  },
-
-  // 学习进度
-  {
-    path: "progress",
-    element: (
-      <LazyLoad>
-        <Progress />
-      </LazyLoad>
-    ),
+    path: "/chat",
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: (
+          <LazyLoad>
+            <ChatDetail />
+          </LazyLoad>
+        ),
+      },
+    ],
   },
 
   // 404 页面
