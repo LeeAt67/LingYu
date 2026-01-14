@@ -64,7 +64,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-8">
+    <div className="h-screen bg-white flex items-center justify-center p-8 overflow-hidden">
       <div className="w-full max-w-md">
         {/* Logo 和标题 */}
         <div className="text-center mb-8">

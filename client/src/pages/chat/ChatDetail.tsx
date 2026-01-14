@@ -195,10 +195,10 @@ const ChatDetailPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
       {/* 顶部栏 */}
-      <div className="border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+      <div className="border-b border-gray-200 flex-shrink-0">
+        <div className="max-w-6xl mx-auto px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h2 className="text-lg font-semibold text-black">AI 对话</h2>
             {user?.id && (
@@ -227,11 +227,11 @@ const ChatDetailPage = () => {
       </div>
 
       {/* 主内容区域 */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-8 py-8">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-4xl mx-auto px-8 py-6 h-full">
           {/* 欢迎语 */}
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20">
+            <div className="flex flex-col items-center justify-center h-full">
               <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center mb-6">
                 <Sparkles className="text-white" size={32} />
               </div>
@@ -245,11 +245,11 @@ const ChatDetailPage = () => {
           )}
 
           {/* 消息列表 */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-4 ${
+                className={`flex gap-3 ${
                   message.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
@@ -259,7 +259,7 @@ const ChatDetailPage = () => {
                   </div>
                 )}
                 <div
-                  className={`max-w-[70%] rounded-lg px-4 py-3 ${
+                  className={`max-w-[70%] rounded-lg px-4 py-2 ${
                     message.role === "user"
                       ? "bg-black text-white"
                       : "bg-gray-100 text-black"
@@ -281,11 +281,11 @@ const ChatDetailPage = () => {
 
             {/* 加载状态 */}
             {isLoading && (
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-black flex items-center justify-center">
                   <Sparkles className="text-white animate-pulse" size={16} />
                 </div>
-                <div className="bg-gray-100 rounded-lg px-4 py-3">
+                <div className="bg-gray-100 rounded-lg px-4 py-2">
                   <div className="flex gap-1">
                     <span
                       className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
@@ -310,17 +310,17 @@ const ChatDetailPage = () => {
       </div>
 
       {/* 底部输入区域 */}
-      <div className="border-t border-gray-200 bg-white">
-        <div className="max-w-4xl mx-auto px-8 py-6">
-          <div className="flex gap-4 items-end">
+      <div className="border-t border-gray-200 bg-white flex-shrink-0">
+        <div className="max-w-4xl mx-auto px-8 py-4">
+          <div className="flex gap-3 items-end">
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="输入消息... (Enter 发送，Shift+Enter 换行)"
+              placeholder="输入消息... (Enter 发送)"
               rows={1}
-              className="flex-1 resize-none min-h-[44px] max-h-[200px] border-gray-200"
+              className="flex-1 resize-none min-h-[44px] max-h-[120px] border-gray-200"
               disabled={isLoading}
             />
             <Button

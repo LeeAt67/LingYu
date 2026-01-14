@@ -36,9 +36,9 @@ const Layout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="h-screen bg-white flex overflow-hidden">
       {/* 左侧边栏 */}
-      <aside className="w-64 border-r border-gray-200 flex flex-col">
+      <aside className="w-64 border-r border-gray-200 flex flex-col flex-shrink-0">
         {/* Logo 区域 */}
         <div className="h-16 flex items-center px-6 border-b border-gray-200">
           <h1 className="text-xl font-bold text-black">Neo</h1>
@@ -93,7 +93,7 @@ const Layout = () => {
       </aside>
 
       {/* 主内容区域 */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-hidden">
         <Outlet />
       </main>
     </div>

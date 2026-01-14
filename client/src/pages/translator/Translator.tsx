@@ -192,22 +192,22 @@ export const Translator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
       {/* 顶部栏 */}
-      <div className="border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-8 py-4">
+      <div className="border-b border-gray-200 flex-shrink-0">
+        <div className="max-w-6xl mx-auto px-8 py-3">
           <h2 className="text-lg font-semibold text-black">AI 翻译器</h2>
         </div>
       </div>
 
       {/* 主内容 */}
-      <div className="max-w-6xl mx-auto p-8">
-        <div className="space-y-6">
+      <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
+        <div className="w-full max-w-6xl h-full flex flex-col">
           {/* 主卡片 */}
-          <Card className="p-8 border-gray-200">
-            <div className="space-y-6">
+          <Card className="flex-1 p-6 border-gray-200 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col gap-4 overflow-hidden">
               {/* 语言选择器 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4 flex-shrink-0">
                 <LanguageSelector
                   type="source"
                   value={sourceLanguage}
@@ -223,85 +223,77 @@ export const Translator = () => {
               </div>
 
               {/* 文本输入区域 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-black">
+              <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
+                <div className="flex flex-col gap-2 min-h-0">
+                  <label className="text-sm font-medium text-black flex-shrink-0">
                     源文本
                   </label>
                   <Textarea
                     value={input}
                     onChange={handleInputChange}
                     placeholder="输入要翻译的文本..."
-                    rows={8}
                     disabled={disabled}
-                    className="resize-none border-gray-200"
+                    className="resize-none border-gray-200 flex-1 min-h-0"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-black">
+                <div className="flex flex-col gap-2 min-h-0">
+                  <label className="text-sm font-medium text-black flex-shrink-0">
                     翻译结果
                   </label>
                   <Textarea
                     value={output}
                     readOnly
                     placeholder="翻译结果将显示在这里..."
-                    rows={8}
-                    className="resize-none bg-gray-50 border-gray-200"
+                    className="resize-none bg-gray-50 border-gray-200 flex-1 min-h-0"
                   />
                 </div>
               </div>
 
+              {/* 进度条或错误提示 */}
+              {ready === false && (
+                <div className="flex-shrink-0 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 text-center mb-2">
+                    正在加载模型...（首次加载需要一些时间）
+                  </p>
+                  <div className="space-y-2 max-h-20 overflow-y-auto">
+                    {progressItems.map((item) => (
+                      <ProgressBar
+                        key={item.file}
+                        fileName={item.file}
+                        progress={item.progress}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="flex-shrink-0 p-3 bg-red-50 rounded-lg border border-red-200 flex items-center justify-between">
+                  <p className="text-xs text-red-600">{error}</p>
+                  <Button
+                    onClick={handleRetry}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                  >
+                    清除
+                  </Button>
+                </div>
+              )}
+
               {/* 翻译按钮 */}
-              <div className="flex justify-center">
+              <div className="flex justify-center flex-shrink-0">
                 <Button
                   onClick={handleTranslate}
                   disabled={disabled || !ready}
                   size="lg"
-                  className="w-full md:w-auto px-12 bg-black hover:bg-gray-800 text-white"
+                  className="px-12 bg-black hover:bg-gray-800 text-white"
                 >
                   {disabled ? "翻译中..." : "翻译"}
                 </Button>
               </div>
             </div>
           </Card>
-
-          {/* 进度条显示区域 */}
-          {ready === false && (
-            <Card className="p-6 border-gray-200">
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600 text-center">
-                  正在加载模型...（首次加载需要一些时间，模型会被缓存）
-                </p>
-                {progressItems.map((item) => (
-                  <ProgressBar
-                    key={item.file}
-                    fileName={item.file}
-                    progress={item.progress}
-                  />
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* 错误消息显示区域 */}
-          {error && (
-            <Card className="p-6 border-red-200 bg-red-50">
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-red-600">错误</p>
-                  <p className="text-sm text-gray-600">{error}</p>
-                </div>
-                <Button
-                  onClick={handleRetry}
-                  variant="outline"
-                  size="sm"
-                  className="w-full md:w-auto"
-                >
-                  清除错误
-                </Button>
-              </div>
-            </Card>
-          )}
         </div>
       </div>
     </div>
