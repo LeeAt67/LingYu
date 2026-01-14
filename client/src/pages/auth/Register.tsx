@@ -1,23 +1,15 @@
 /**
- * 注册页面
- * 用户注册功能，包含密码强度指示器
+ * 注册页面 - Web 桌面端版本
  */
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowLeft,
-  User,
-  AlertCircle,
-} from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { PasswordStrength } from "@/components/auth/PasswordStrength";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const registerSchema = z
   .object({
@@ -28,8 +20,7 @@ const registerSchema = z
       .min(8, "密码至少8个字符")
       .regex(/[A-Z]/, "密码必须包含大写字母")
       .regex(/[a-z]/, "密码必须包含小写字母")
-      .regex(/\d/, "密码必须包含数字")
-      .regex(/[!@#$%^&*(),.?":{}|<>]/, "密码必须包含特殊字符"),
+      .regex(/\d/, "密码必须包含数字"),
     confirmPassword: z.string().min(1, "请确认密码"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -53,13 +44,10 @@ const RegisterPage = () => {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
   });
-
-  const password = watch("password", "");
 
   const onSubmit = async (data: RegisterForm) => {
     clearError();
@@ -71,67 +59,46 @@ const RegisterPage = () => {
       });
       navigate("/");
     } catch (error) {
-      // 错误已经在 store 中处理
       console.error("注册失败:", error);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* 导航栏 */}
-      <div className="h-14 flex items-center px-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>返回</span>
-        </button>
-      </div>
-
-      {/* 内容区域 */}
-      <div className="flex-1 px-6 pb-8 overflow-y-auto">
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center">
-            <span className="text-4xl">📚</span>
-          </div>
-        </div>
-
-        {/* 标题 */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-text-primary mb-2">
-            创建账号 ✨
-          </h1>
-          <p className="text-sm text-text-secondary">开始你的学习之旅</p>
+    <div className="min-h-screen bg-white flex items-center justify-center p-8">
+      <div className="w-full max-w-md">
+        {/* Logo 和标题 */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-black mb-2">创建账号</h1>
+          <p className="text-gray-600">开始使用 Neo</p>
         </div>
 
         {/* 错误提示 */}
         {error && (
-          <div className="mb-4 p-4 bg-error/10 border border-error/20 rounded-xl flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-error flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm text-error">{error}</p>
-            </div>
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
 
-        {/* 表单 */}
+        {/* 注册表单 */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* 邮箱 */}
           <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              邮箱
+            </label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-              <input
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
                 {...register("email")}
                 type="email"
-                placeholder="邮箱地址"
+                placeholder="your@email.com"
                 disabled={isLoading}
-                className="w-full h-12 pl-12 pr-4 bg-surface border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="pl-10 h-11 border-gray-200"
               />
             </div>
             {errors.email && (
-              <p className="text-sm text-error mt-1 ml-1">
+              <p className="text-sm text-red-600 mt-1">
                 {errors.email.message}
               </p>
             )}
@@ -139,39 +106,43 @@ const RegisterPage = () => {
 
           {/* 姓名 */}
           <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              姓名
+            </label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-              <input
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
                 {...register("name")}
                 type="text"
-                placeholder="姓名"
+                placeholder="你的姓名"
                 disabled={isLoading}
-                className="w-full h-12 pl-12 pr-4 bg-surface border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="pl-10 h-11 border-gray-200"
               />
             </div>
             {errors.name && (
-              <p className="text-sm text-error mt-1 ml-1">
-                {errors.name.message}
-              </p>
+              <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
             )}
           </div>
 
           {/* 密码 */}
           <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              密码
+            </label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-              <input
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
                 {...register("password")}
                 type={showPassword ? "text" : "password"}
-                placeholder="密码"
+                placeholder="至少8个字符"
                 disabled={isLoading}
-                className="w-full h-12 pl-12 pr-12 bg-surface border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="pl-10 pr-10 h-11 border-gray-200"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={isLoading}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary disabled:opacity-50"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -181,34 +152,31 @@ const RegisterPage = () => {
               </button>
             </div>
             {errors.password && (
-              <p className="text-sm text-error mt-1 ml-1">
+              <p className="text-sm text-red-600 mt-1">
                 {errors.password.message}
               </p>
-            )}
-            {/* 密码强度指示器 */}
-            {password && (
-              <div className="mt-3 p-3 bg-surface rounded-lg">
-                <PasswordStrength password={password} />
-              </div>
             )}
           </div>
 
           {/* 确认密码 */}
           <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              确认密码
+            </label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-              <input
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
                 {...register("confirmPassword")}
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="确认密码"
+                placeholder="再次输入密码"
                 disabled={isLoading}
-                className="w-full h-12 pl-12 pr-12 bg-surface border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="pl-10 pr-10 h-11 border-gray-200"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 disabled={isLoading}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary disabled:opacity-50"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showConfirmPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -218,67 +186,35 @@ const RegisterPage = () => {
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-sm text-error mt-1 ml-1">
+              <p className="text-sm text-red-600 mt-1">
                 {errors.confirmPassword.message}
               </p>
             )}
           </div>
 
           {/* 注册按钮 */}
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full h-12 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-11 bg-black hover:bg-gray-800 text-white mt-6"
           >
-            {isLoading ? "注册中..." : "注 册 🚀"}
-          </button>
+            {isLoading ? "注册中..." : "注册"}
+          </Button>
         </form>
 
         {/* 用户协议 */}
         <div className="text-center mt-4">
-          <p className="text-xs text-text-tertiary">
-            注册即表示同意{" "}
-            <Link to="/terms" className="text-primary hover:underline">
-              用户协议
-            </Link>{" "}
-            和{" "}
-            <Link to="/privacy" className="text-primary hover:underline">
-              隐私政策
-            </Link>
+          <p className="text-xs text-gray-500">
+            注册即表示同意用户协议和隐私政策
           </p>
-        </div>
-
-        {/* 分隔线 */}
-        <div className="flex items-center gap-4 my-6">
-          <div className="flex-1 h-px bg-divider" />
-          <span className="text-sm text-text-tertiary">或</span>
-          <div className="flex-1 h-px bg-divider" />
-        </div>
-
-        {/* 第三方登录 */}
-        <div className="space-y-3">
-          <button
-            disabled={isLoading}
-            className="w-full h-12 bg-surface border border-border rounded-xl flex items-center justify-center gap-2 hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="text-xl">🍎</span>
-            <span className="text-text-primary font-medium">Apple注册</span>
-          </button>
-          <button
-            disabled={isLoading}
-            className="w-full h-12 bg-surface border border-border rounded-xl flex items-center justify-center gap-2 hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="text-xl">📱</span>
-            <span className="text-text-primary font-medium">微信注册</span>
-          </button>
         </div>
 
         {/* 登录链接 */}
         <div className="text-center mt-6">
-          <span className="text-sm text-text-secondary">已有账号? </span>
+          <span className="text-sm text-gray-600">已有账号？</span>
           <Link
             to="/auth/login"
-            className="text-sm text-primary hover:text-primary-dark font-medium"
+            className="text-sm text-black hover:underline font-medium ml-1"
           >
             立即登录
           </Link>

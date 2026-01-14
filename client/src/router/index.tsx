@@ -5,6 +5,7 @@ import { lazy, Suspense } from "react";
 import { RouteObject, Navigate } from "react-router-dom";
 
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 // 布局组件
 import Layout from "@/components/layout/Layout";
@@ -116,7 +117,11 @@ export const routes: RouteObject[] = [
   // 主应用页面 (使用主布局和侧边导航)
   {
     path: "/",
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
       // 默认重定向到翻译器
       {
@@ -138,7 +143,11 @@ export const routes: RouteObject[] = [
   // 聊天页面
   {
     path: "/chat",
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,

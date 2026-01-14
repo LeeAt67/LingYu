@@ -1,14 +1,15 @@
 /**
- * 登录页
- * 根据 UI_DESIGN_SPEC.md 设计
+ * 登录页 - Web 桌面端版本
  */
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, AlertCircle } from "lucide-react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const loginSchema = z.object({
   email: z.string().email("请输入有效的邮箱地址"),
@@ -19,6 +20,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error, clearError } = useAuthStore();
 
@@ -34,69 +36,50 @@ const LoginPage = () => {
     clearError();
     try {
       await login(data);
-      navigate("/");
+      // 登录成功后跳转到之前访问的页面或默认页面
+      const from = (location.state as any)?.from?.pathname || "/";
+      navigate(from, { replace: true });
     } catch (error) {
-      // 错误已经在 store 中处理
       console.error("登录失败:", error);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* 导航栏 */}
-      <div className="h-14 flex items-center px-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>返回</span>
-        </button>
-      </div>
-
-      {/* 内容区域 */}
-      <div className="flex-1 px-6 pb-8 overflow-y-auto">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center">
-            <span className="text-4xl">📚</span>
-          </div>
-        </div>
-
-        {/* 标题 */}
+    <div className="min-h-screen bg-white flex items-center justify-center p-8">
+      <div className="w-full max-w-md">
+        {/* Logo 和标题 */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-text-primary mb-2">
-            欢迎回来 👋
-          </h1>
-          <p className="text-sm text-text-secondary">登录继续你的学习之旅</p>
+          <h1 className="text-3xl font-bold text-black mb-2">Neo</h1>
+          <p className="text-gray-600">登录以继续</p>
         </div>
 
         {/* 错误提示 */}
         {error && (
-          <div className="mb-4 p-4 bg-error/10 border border-error/20 rounded-xl flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-error flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm text-error">{error}</p>
-            </div>
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
 
-        {/* 表单 */}
+        {/* 登录表单 */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* 邮箱 */}
           <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              邮箱
+            </label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-              <input
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
                 {...register("email")}
                 type="email"
-                placeholder="邮箱地址"
+                placeholder="your@email.com"
                 disabled={isLoading}
-                className="w-full h-12 pl-12 pr-4 bg-surface border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="pl-10 h-11 border-gray-200"
               />
             </div>
             {errors.email && (
-              <p className="text-sm text-error mt-1 ml-1">
+              <p className="text-sm text-red-600 mt-1">
                 {errors.email.message}
               </p>
             )}
@@ -104,20 +87,23 @@ const LoginPage = () => {
 
           {/* 密码 */}
           <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              密码
+            </label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-              <input
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
                 {...register("password")}
                 type={showPassword ? "text" : "password"}
-                placeholder="密码"
+                placeholder="••••••••"
                 disabled={isLoading}
-                className="w-full h-12 pl-12 pr-12 bg-surface border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="pl-10 pr-10 h-11 border-gray-200"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={isLoading}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary disabled:opacity-50"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -127,7 +113,7 @@ const LoginPage = () => {
               </button>
             </div>
             {errors.password && (
-              <p className="text-sm text-error mt-1 ml-1">
+              <p className="text-sm text-red-600 mt-1">
                 {errors.password.message}
               </p>
             )}
@@ -137,53 +123,28 @@ const LoginPage = () => {
           <div className="flex justify-end">
             <Link
               to="/auth/forgot-password"
-              className="text-sm text-primary hover:text-primary-dark"
+              className="text-sm text-gray-600 hover:text-black"
             >
-              忘记密码?
+              忘记密码？
             </Link>
           </div>
 
           {/* 登录按钮 */}
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full h-12 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-11 bg-black hover:bg-gray-800 text-white"
           >
-            {isLoading ? "登录中..." : "登 录 🚀"}
-          </button>
+            {isLoading ? "登录中..." : "登录"}
+          </Button>
         </form>
-
-        {/* 分隔线 */}
-        <div className="flex items-center gap-4 my-6">
-          <div className="flex-1 h-px bg-divider" />
-          <span className="text-sm text-text-tertiary">或</span>
-          <div className="flex-1 h-px bg-divider" />
-        </div>
-
-        {/* 第三方登录 */}
-        <div className="space-y-3">
-          <button
-            disabled={isLoading}
-            className="w-full h-12 bg-surface border border-border rounded-xl flex items-center justify-center gap-2 hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="text-xl">🍎</span>
-            <span className="text-text-primary font-medium">Apple登录</span>
-          </button>
-          <button
-            disabled={isLoading}
-            className="w-full h-12 bg-surface border border-border rounded-xl flex items-center justify-center gap-2 hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="text-xl">📱</span>
-            <span className="text-text-primary font-medium">微信登录</span>
-          </button>
-        </div>
 
         {/* 注册链接 */}
         <div className="text-center mt-6">
-          <span className="text-sm text-text-secondary">还没有账号? </span>
+          <span className="text-sm text-gray-600">还没有账号？</span>
           <Link
             to="/auth/register"
-            className="text-sm text-primary hover:text-primary-dark font-medium"
+            className="text-sm text-black hover:underline font-medium ml-1"
           >
             立即注册
           </Link>

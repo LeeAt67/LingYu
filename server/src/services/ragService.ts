@@ -2,14 +2,14 @@
  * RAG (Retrieval-Augmented Generation) 服务
  * 使用 LangChain 实现基于向量嵌入的语义搜索
  */
-import { PrismaClient } from '@prisma/client';
-import { OpenAIEmbeddings } from '@langchain/openai';
-import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
-import { HNSWLib } from '@langchain/community/vectorstores/hnswlib';
-import { Document } from '@langchain/core/documents';
-import OpenAI from 'openai';
-import * as fs from 'fs';
-import * as path from 'path';
+import { PrismaClient } from "@prisma/client";
+import { OpenAIEmbeddings } from "@langchain/openai";
+import { OllamaEmbeddings } from "@langchain/ollama";
+import { HNSWLib } from "@langchain/community/vectorstores/hnswlib";
+import { Document } from "@langchain/core/documents";
+import OpenAI from "openai";
+import * as fs from "fs";
+import * as path from "path";
 
 const prisma = new PrismaClient();
 
@@ -30,34 +30,34 @@ export class RAGService {
   private useOllama: boolean;
 
   constructor() {
-    this.vectorStoreDir = path.join(process.cwd(), 'data', 'vectorstores');
-    
+    this.vectorStoreDir = path.join(process.cwd(), "data", "vectorstores");
+
     // 确保向量存储目录存在
     if (!fs.existsSync(this.vectorStoreDir)) {
       fs.mkdirSync(this.vectorStoreDir, { recursive: true });
     }
 
     // 根据配置选择嵌入模型
-    this.useOllama = process.env.USE_OLLAMA_EMBEDDINGS === 'true';
-    
+    this.useOllama = process.env.USE_OLLAMA_EMBEDDINGS === "true";
+
     if (this.useOllama) {
       // 使用 Ollama 本地嵌入模型
       this.embeddings = new OllamaEmbeddings({
-        model: process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text',
-        baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+        model: process.env.OLLAMA_EMBEDDING_MODEL || "nomic-embed-text",
+        baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
       });
-      console.log('使用 Ollama 嵌入模型');
+      console.log("使用 Ollama 嵌入模型");
     } else {
       // 使用 OpenAI 嵌入模型
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) {
-        throw new Error('OPENAI_API_KEY 环境变量未配置');
+        throw new Error("OPENAI_API_KEY 环境变量未配置");
       }
       this.embeddings = new OpenAIEmbeddings({
         openAIApiKey: apiKey,
-        modelName: 'text-embedding-3-small',
+        modelName: "text-embedding-3-small",
       });
-      console.log('使用 OpenAI 嵌入模型');
+      console.log("使用 OpenAI 嵌入模型");
     }
   }
 
@@ -68,7 +68,7 @@ export class RAGService {
     if (!this.openai) {
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) {
-        throw new Error('OPENAI_API_KEY 环境变量未配置');
+        throw new Error("OPENAI_API_KEY 环境变量未配置");
       }
       this.openai = new OpenAI({ apiKey });
     }
@@ -92,7 +92,7 @@ export class RAGService {
       // 获取用户的所有学习内容
       const userContents = await prisma.content.findMany({
         where: { userId },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       });
 
       if (userContents.length === 0) {
@@ -101,19 +101,25 @@ export class RAGService {
       }
 
       // 转换为 LangChain 文档格式
-      const documents = userContents.map(content => new Document({
-        pageContent: `标题: ${content.title}\n内容: ${content.content}`,
-        metadata: {
-          id: content.id,
-          title: content.title,
-          type: content.type,
-          tags: content.tags,
-          createdAt: content.createdAt.toISOString(),
-        },
-      }));
+      const documents = userContents.map(
+        (content) =>
+          new Document({
+            pageContent: `标题: ${content.title}\n内容: ${content.content}`,
+            metadata: {
+              id: content.id,
+              title: content.title,
+              type: content.type,
+              tags: content.tags,
+              createdAt: content.createdAt.toISOString(),
+            },
+          })
+      );
 
       // 创建向量存储
-      const vectorStore = await HNSWLib.fromDocuments(documents, this.embeddings);
+      const vectorStore = await HNSWLib.fromDocuments(
+        documents,
+        this.embeddings
+      );
 
       // 保存到磁盘
       const storePath = this.getUserVectorStorePath(userId);
@@ -122,9 +128,11 @@ export class RAGService {
       // 缓存到内存
       this.vectorStoreCache.set(userId, vectorStore);
 
-      console.log(`用户 ${userId} 的向量存储构建完成，共 ${documents.length} 个文档`);
+      console.log(
+        `用户 ${userId} 的向量存储构建完成，共 ${documents.length} 个文档`
+      );
     } catch (error) {
-      console.error('构建向量存储失败:', error);
+      console.error("构建向量存储失败:", error);
       throw error;
     }
   }
@@ -151,7 +159,7 @@ export class RAGService {
       await this.buildVectorStore(userId);
       return this.vectorStoreCache.get(userId) || null;
     } catch (error) {
-      console.error('获取向量存储失败:', error);
+      console.error("获取向量存储失败:", error);
       return null;
     }
   }
@@ -159,14 +167,17 @@ export class RAGService {
   /**
    * 添加新内容到向量存储
    */
-  async addContentToVectorStore(userId: string, contentId: string): Promise<void> {
+  async addContentToVectorStore(
+    userId: string,
+    contentId: string
+  ): Promise<void> {
     try {
       const content = await prisma.content.findUnique({
         where: { id: contentId },
       });
 
       if (!content || content.userId !== userId) {
-        throw new Error('内容不存在或无权访问');
+        throw new Error("内容不存在或无权访问");
       }
 
       const document = new Document({
@@ -181,7 +192,7 @@ export class RAGService {
       });
 
       let vectorStore = await this.getVectorStore(userId);
-      
+
       if (!vectorStore) {
         // 如果向量存储不存在，创建新的
         await this.buildVectorStore(userId);
@@ -197,7 +208,7 @@ export class RAGService {
 
       console.log(`内容 ${contentId} 已添加到用户 ${userId} 的向量存储`);
     } catch (error) {
-      console.error('添加内容到向量存储失败:', error);
+      console.error("添加内容到向量存储失败:", error);
       throw error;
     }
   }
@@ -205,7 +216,11 @@ export class RAGService {
   /**
    * 语义搜索：使用向量相似度查找相关内容
    */
-  async semanticSearch(userId: string, query: string, k: number = 5): Promise<ContentWithEmbedding[]> {
+  async semanticSearch(
+    userId: string,
+    query: string,
+    k: number = 5
+  ): Promise<ContentWithEmbedding[]> {
     try {
       const vectorStore = await this.getVectorStore(userId);
 
@@ -227,7 +242,7 @@ export class RAGService {
         similarity: score,
       })) as any;
     } catch (error) {
-      console.error('语义搜索失败:', error);
+      console.error("语义搜索失败:", error);
       return [];
     }
   }
@@ -246,8 +261,8 @@ export class RAGService {
 
       // 2. 构建上下文
       const context = relevantContents
-        .map(content => `标题: ${content.title}\n内容: ${content.content}`)
-        .join('\n\n---\n\n');
+        .map((content) => `标题: ${content.title}\n内容: ${content.content}`)
+        .join("\n\n---\n\n");
 
       // 3. 调用 OpenAI 生成回答
       const openaiClient = this.getOpenAIClient();
@@ -265,12 +280,12 @@ ${context}
 1. 优先使用用户已学习的内容
 2. 引用具体的学习材料
 3. 如果内容不足，可以适当补充相关知识
-4. 回答要简洁明了，便于理解`
+4. 回答要简洁明了，便于理解`,
           },
           {
             role: "user",
-            content: question
-          }
+            content: question,
+          },
         ],
         max_tokens: 500,
         temperature: 0.7,
@@ -278,7 +293,7 @@ ${context}
 
       return response.choices[0]?.message?.content || "抱歉，我无法生成回答。";
     } catch (error) {
-      console.error('个性化问答错误:', error);
+      console.error("个性化问答错误:", error);
       return "抱歉，处理您的问题时出现了错误。";
     }
   }
@@ -286,7 +301,11 @@ ${context}
   /**
    * 知识关联：基于语义相似度查找相关内容
    */
-  async findRelatedContents(userId: string, contentId: string, limit: number = 5): Promise<any[]> {
+  async findRelatedContents(
+    userId: string,
+    contentId: string,
+    limit: number = 5
+  ): Promise<any[]> {
     try {
       // 获取目标内容
       const targetContent = await prisma.content.findUnique({
@@ -302,9 +321,11 @@ ${context}
       const results = await this.semanticSearch(userId, query, limit + 1);
 
       // 过滤掉自己
-      return results.filter(content => content.id !== contentId).slice(0, limit);
+      return results
+        .filter((content) => content.id !== contentId)
+        .slice(0, limit);
     } catch (error) {
-      console.error('知识关联错误:', error);
+      console.error("知识关联错误:", error);
       return [];
     }
   }
@@ -321,7 +342,7 @@ ${context}
       // 获取用户的学习内容
       const userContents = await prisma.content.findMany({
         where: { userId },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       });
 
       if (userContents.length === 0) {
@@ -335,9 +356,9 @@ ${context}
       // 找出需要复习的内容（7天前的内容）
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+
       const reviewContents = userContents
-        .filter(content => content.createdAt < sevenDaysAgo)
+        .filter((content) => content.createdAt < sevenDaysAgo)
         .slice(0, 5);
 
       // 分析内容类型和标签
@@ -345,7 +366,11 @@ ${context}
       const commonTags = this.extractCommonTags(userContents);
 
       // 生成建议
-      const recommendations = this.generateRecommendations(userContents.length, contentTypes, commonTags);
+      const recommendations = this.generateRecommendations(
+        userContents.length,
+        contentTypes,
+        commonTags
+      );
       const suggestedTopics = this.suggestNewTopics(commonTags, contentTypes);
 
       return {
@@ -354,7 +379,7 @@ ${context}
         reviewContents,
       };
     } catch (error) {
-      console.error('学习建议错误:', error);
+      console.error("学习建议错误:", error);
       return {
         recommendations: ["继续保持学习的好习惯！"],
         suggestedTopics: [],
@@ -373,7 +398,7 @@ ${context}
   // 私有辅助方法
   private analyzeContentTypes(contents: any[]): Record<string, number> {
     const types: Record<string, number> = {};
-    contents.forEach(content => {
+    contents.forEach((content) => {
       types[content.type] = (types[content.type] || 0) + 1;
     });
     return types;
@@ -381,7 +406,7 @@ ${context}
 
   private extractCommonTags(contents: any[]): string[] {
     const tagCount: Record<string, number> = {};
-    contents.forEach(content => {
+    contents.forEach((content) => {
       content.tags.forEach((tag: string) => {
         tagCount[tag] = (tagCount[tag] || 0) + 1;
       });
@@ -408,7 +433,7 @@ ${context}
       recommendations.push("考虑添加一些音频内容来提高听力技能");
     }
 
-    if (commonTags.includes('语法') && !commonTags.includes('练习')) {
+    if (commonTags.includes("语法") && !commonTags.includes("练习")) {
       recommendations.push("建议添加一些语法练习题来巩固理论知识");
     }
 
@@ -419,25 +444,28 @@ ${context}
     return recommendations;
   }
 
-  private suggestNewTopics(commonTags: string[], contentTypes: Record<string, number>): string[] {
+  private suggestNewTopics(
+    commonTags: string[],
+    contentTypes: Record<string, number>
+  ): string[] {
     const suggestions: string[] = [];
 
-    if (commonTags.includes('语法')) {
-      suggestions.push('高级语法结构', '语法练习');
+    if (commonTags.includes("语法")) {
+      suggestions.push("高级语法结构", "语法练习");
     }
-    if (commonTags.includes('词汇')) {
-      suggestions.push('同义词辨析', '词汇搭配');
+    if (commonTags.includes("词汇")) {
+      suggestions.push("同义词辨析", "词汇搭配");
     }
-    if (commonTags.includes('口语')) {
-      suggestions.push('发音练习', '日常对话');
+    if (commonTags.includes("口语")) {
+      suggestions.push("发音练习", "日常对话");
     }
 
     if (contentTypes.TEXT && Object.keys(contentTypes).length === 1) {
-      suggestions.push('听力材料', '视频学习');
+      suggestions.push("听力材料", "视频学习");
     }
 
     if (suggestions.length === 0) {
-      suggestions.push('阅读理解', '写作练习', '听力训练');
+      suggestions.push("阅读理解", "写作练习", "听力训练");
     }
 
     return suggestions.slice(0, 5);
