@@ -235,8 +235,8 @@ router.get('/recommendations/:userId', async (req, res) => {
  * @swagger
  * /api/rag/search:
  *   post:
- *     summary: 智能搜索
- *     description: 在用户内容中进行智能搜索
+ *     summary: 语义搜索
+ *     description: 使用向量相似度在用户内容中进行语义搜索
  *     tags: [RAG]
  *     requestBody:
  *       required: true
@@ -254,42 +254,19 @@ router.get('/recommendations/:userId', async (req, res) => {
  *               query:
  *                 type: string
  *                 example: 英语语法
- *               type:
- *                 type: string
- *                 example: TEXT
+ *               limit:
+ *                 type: integer
+ *                 default: 5
+ *                 example: 5
  *     responses:
  *       200:
  *         description: 搜索成功
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     query:
- *                       type: string
- *                     type:
- *                       type: string
- *                     result:
- *                       type: string
- *                     timestamp:
- *                       type: string
- *                       format: date-time
  *       400:
  *         description: 参数错误
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/search', async (req, res) => {
   try {
-    const { userId, query, type } = req.body;
+    const { userId, query, limit = 5 } = req.body;
 
     if (!userId || !query) {
       return res.status(400).json({
@@ -298,24 +275,133 @@ router.post('/search', async (req, res) => {
       });
     }
 
-    // 这里可以实现更复杂的搜索逻辑
-    // 目前先使用个性化问答作为搜索结果
-    const searchResult = await ragService.personalizedQA(userId, `搜索关于"${query}"的内容`);
+    // 使用语义搜索
+    const results = await ragService.semanticSearch(userId, query, limit);
 
     res.json({
       success: true,
       data: {
         query,
-        type,
-        result: searchResult,
+        results,
+        count: results.length,
         timestamp: new Date().toISOString(),
       },
     });
   } catch (error) {
-    console.error('智能搜索API错误:', error);
+    console.error('语义搜索API错误:', error);
     res.status(500).json({
       success: false,
       message: '服务器内部错误',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/rag/vectorstore/build:
+ *   post:
+ *     summary: 构建向量存储
+ *     description: 为用户的学习内容构建向量存储
+ *     tags: [RAG]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 构建成功
+ */
+router.post('/vectorstore/build', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: '用户ID不能为空',
+      });
+    }
+
+    await ragService.buildVectorStore(userId);
+
+    res.json({
+      success: true,
+      message: '向量存储构建成功',
+      data: {
+        userId,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error('构建向量存储API错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器内部错误',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/rag/vectorstore/add:
+ *   post:
+ *     summary: 添加内容到向量存储
+ *     description: 将新内容添加到用户的向量存储
+ *     tags: [RAG]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - contentId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               contentId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 添加成功
+ */
+router.post('/vectorstore/add', async (req, res) => {
+  try {
+    const { userId, contentId } = req.body;
+
+    if (!userId || !contentId) {
+      return res.status(400).json({
+        success: false,
+        message: '用户ID和内容ID不能为空',
+      });
+    }
+
+    await ragService.addContentToVectorStore(userId, contentId);
+
+    res.json({
+      success: true,
+      message: '内容已添加到向量存储',
+      data: {
+        userId,
+        contentId,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error('添加内容到向量存储API错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器内部错误',
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

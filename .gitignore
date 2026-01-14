@@ -102,3 +102,6 @@ temp/
 
 # Prisma
 prisma/migrations/
+
+# Vector stores (RAG)
+server/data/vectorstores/
